@@ -1,0 +1,119 @@
+{
+  "name": "Container",
+  "dockerComposeFile": "docker-compose.dev.yml",
+  "service": "app",
+  "shutdownAction": "stopCompose",
+  "workspaceFolder": "/workspace",
+  "remoteUser": "root",
+  "initializeCommand": "echo $(docker network ls | grep main > /dev/null || docker network create main)",
+  "forwardPorts": [
+    9092,
+    2181,
+    8081,
+    3001,
+    7559,
+    9021,
+    8005,
+    8007,
+    8883,
+    16686
+  ],
+  "portsAttributes": {
+    "9092": {
+      "label": "Kafka"
+    },
+    "2181": {
+      "label": "Zookeeper"
+    },
+    "8081": {
+      "label": "Kafka Schema Registry"
+    },
+    "9021": {
+      "label": "Kafka Control Center"
+    },
+    "3001": {
+      "label": "RESTful API"
+    },
+    "7559": {
+      "label": "Redis"
+    },
+    "8005": {
+      "label": "DynamoDB Local"
+    },
+    "8007": {
+      "label": "DynamoDB Admin"
+    },
+    "8883": {
+      "label": "MQTT (Mosquitto)"
+    },
+    "16686": {
+      "label": "Jaeger"
+    }
+  },
+  "customizations": {
+    "codespaces": {
+      "repositories": {
+        "jucr-io/schemas": {
+          "permissions": {
+            "contents": "read",
+            "packages": "read"
+          }
+        },
+        "jucr-io/lightning-rs": {
+          "permissions": {
+            "contents": "read",
+            "packages": "read"
+          }
+        }
+      }
+    },
+    "vscode": {
+      "extensions": [
+        "gruntfuggly.todo-tree",
+        "oderwat.indent-rainbow",
+        "bierner.markdown-mermaid",
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "nefrob.vscode-just-syntax"
+      ],
+      "settings": {
+        "rust-analyzer.diagnostics.disabled": [
+          "trait-impl-incorrect-safety"
+        ],
+        "rust-analyzer.references.excludeTests": true,
+        "rust-analyzer.cargo.allTargets": false,
+        "rust-analyzer.cargo.features": [
+          "create-kafka-topics"
+        ],
+        "rust-analyzer.cargo.noDefaultFeatures": false,
+        "rust-analyzer.rustfmt.extraArgs": [
+          "+nightly"
+        ],
+        "[rust]": {
+          "editor.defaultFormatter": "rust-lang.rust-analyzer"
+        },
+        "editor.autoIndent": "full",
+        "editor.bracketPairColorization.enabled": true,
+        "editor.comments.insertSpace": true,
+        "editor.detectIndentation": true,
+        "markdown.preview.scrollEditorWithPreview": false,
+        "markdown.preview.scrollPreviewWithEditor": false,
+        "editor.dragAndDrop": false,
+        "editor.foldingImportsByDefault": false,
+        "editor.formatOnSave": true,
+        "editor.tabSize": 4,
+        "files.autoSave": "afterDelay",
+        "files.autoSaveDelay": 2000,
+        "files.insertFinalNewline": true,
+        "files.trimFinalNewlines": true,
+        "files.trimTrailingWhitespace": true,
+        "git.autofetch": "all",
+        "git.autofetchPeriod": 180,
+        "git.autorefresh": true,
+        "git.enableCommitSigning": true,
+        "indentRainbow.indicatorStyle": "light",
+        "indentRainbow.lightIndicatorStyleLineWidth": 1
+      }
+    }
+  }
+}
