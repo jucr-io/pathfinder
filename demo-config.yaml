@@ -1,3 +1,4 @@
+service_name: "max-test-subscription-handler"
 health_endpoint:
   hostname: 0.0.0.0
   port: 8088
@@ -5,9 +6,10 @@ router_endpoint:
   hostname: 0.0.0.0
   port: 8005
   path: "/graphql"
+  subscription:
+    inject_peer: "router.router"
 link_version: "1.0"
 federation_version: "2.7"
-subgraph_name: "max-test-subscription-handler"
 listeners:
   - operation: "chargingSessionChanged"
     entity_name: "ChargingSession"
@@ -19,7 +21,7 @@ listeners:
         delay_ms: 500 # optional delay between receiving and notifying the router
         data_serde: "protobuf_sr" # allowed: protobuf, protobuf_sr, json -- default=protobuf_sr
         data_source: "key" # allowed: key, value -- default=key
-        protobuf_tag: 1 # only for protobuf, protobuf_sr -- default=1
+        protobuf_id_tag: 1 # only for protobuf, protobuf_sr -- default=1
         # rate_limit
       - name: "evses.charging_sessions.integration_events.charging_session_updated"
       - name: "evses.charging_sessions.integration_events.charging_session_terminated"
@@ -32,4 +34,4 @@ listeners:
     topics:
       - name: "evses.evses.integration_events.evse_telemetry_updated"
         data_source: "value"
-        protobuf_tag: 2
+        protobuf_id_tag: 2

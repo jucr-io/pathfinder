@@ -39,3 +39,11 @@ indoc = "2.0.5"
 derive_more = { version = "1.0.0", features = ["full"] }
 kameo = "0.10.0"
 apollo-parser = "0.8.2"
+async-trait = "0.1.82"
+graphql_client = { version = "0.14.0", features = [
+  "reqwest",
+  "reqwest-rustls",
+  "graphql_query_derive",
+], default-features = false }
+reqwest = { version = "0.11", features = ["rustls-tls", "json"] }
+graphql-query = "1.0.0"

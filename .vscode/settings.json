@@ -8,5 +8,8 @@
   "rust-analyzer.cargo.noDefaultFeatures": false,
   "rust-analyzer.rustfmt.extraArgs": [
     "+nightly"
-  ]
+  ],
+  "[rust]": {
+    "editor.tabSize": 4
+  }
 }

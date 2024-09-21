@@ -45,26 +45,26 @@ impl Into<UniqueListenerMap> for Vec<Listener> {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Topic {
     /// The name of the topic.
-    name: String,
+    pub name: String,
     /// Optional delay between receiving and notifying the router.
-    delay_ms: Option<i64>,
+    pub delay_ms: Option<i64>,
     /// The source of the data to use for the topic.
     #[serde(default = "TopicDataSerde::default")]
-    data_serde: TopicDataSerde,
+    pub data_serde: TopicDataSerde,
     /// The source of the data to use for the topic.
     #[serde(default = "TopicDataSource::default")]
-    data_source: TopicDataSource,
+    pub data_source: TopicDataSource,
     /// The protobuf tag to use for the topic.
     /// Only valid for protobuf/protobuf_sr data_serde.
     /// Defaults to 1.
     #[serde(default)]
-    protobuf_tag: ProtobufTag,
+    pub protobuf_tag: ProtobufTag,
     /// Whether the topic terminates subscriptions.
     /// If the manager receives a message on a topic that terminates subscriptions, it will
     /// terminate all subscriptions that are listening on this topic AFTER sending a final next
     /// message to the router.
     #[serde(default)]
-    terminates_subscriptions: bool,
+    pub terminates_subscriptions: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
