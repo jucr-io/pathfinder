@@ -1,11 +1,6 @@
-use std::collections::HashMap;
-
-use config::Config;
-use kameo::{actor::ActorRef, mailbox::unbounded::UnboundedMailbox, message::Message, Actor};
+use async_trait::async_trait;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
-
-const SUBSCRIPTION_PROTOCOL_HEADER: &str = "subscription-protocol";
 
 #[derive(Clone, Debug)]
 pub enum SubscriptionProtocol {
@@ -21,40 +16,16 @@ impl From<&str> for SubscriptionProtocol {
     }
 }
 
-pub struct Client {
-    config: Config,
-    inner: reqwest::Client,
+#[async_trait]
+pub trait Client: Send {
+    async fn send(&self, request: Request) -> anyhow::Result<Response>;
+
+    fn clone_box(&self) -> Box<dyn Client>;
 }
 
-impl Actor for Client {
-    type Mailbox = UnboundedMailbox<Self>;
-}
-
-impl Client {
-    pub async fn spawn(config: &Config) -> ActorRef<Self> {
-        let inner = reqwest::Client::new();
-        kameo::spawn(Self { config: config.clone(), inner })
-    }
-}
-
-impl Message<Request> for Client {
-    type Reply = anyhow::Result<Response>;
-
-    async fn handle(
-        &mut self,
-        msg: Request,
-        _ctx: kameo::message::Context<'_, Self, Self::Reply>,
-    ) -> Self::Reply {
-        let result = self.inner.post(&msg.callback_url).json(&msg).send().await?;
-        let status_code = result.status();
-        let subscription_protocol = result
-            .headers()
-            .get(SUBSCRIPTION_PROTOCOL_HEADER)
-            .and_then(|v| v.to_str().ok())
-            .map(Into::into);
-        let response: Option<EmptyResponse> = result.json().await.unwrap_or_default();
-
-        Ok(Response { status_code, subscription_protocol, errors: response.and_then(|r| r.errors) })
+impl Clone for Box<dyn Client> {
+    fn clone(&self) -> Self {
+        self.clone_box()
     }
 }
 
@@ -67,8 +38,8 @@ pub struct Response {
 
 #[derive(Clone, Debug, Default)]
 pub struct Request {
-    values: serde_json::Map<String, serde_json::Value>,
-    callback_url: String,
+    pub values: serde_json::Map<String, serde_json::Value>,
+    pub callback_url: String,
 }
 
 impl Request {
@@ -76,7 +47,7 @@ impl Request {
         let mut request = Request::default();
         request.callback_url = callback_url;
         request.set_string_value("id", id);
-        request.set_string_value("verifier2", verifier);
+        request.set_string_value("verifier", verifier);
         request.set_string_value("kind", "subscription".to_string());
         request
     }

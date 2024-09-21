@@ -1,18 +1,26 @@
-use kameo::{actor::ActorRef, mailbox::unbounded::UnboundedMailbox, message::Message, Actor};
+use kameo::{
+    actor::ActorRef,
+    mailbox::{bounded::BoundedMailbox, unbounded::UnboundedMailbox},
+    message::Message,
+    Actor,
+};
 
 use crate::router;
 
-#[derive(Clone)]
 pub(crate) struct TopicListener {
-    router_client: ActorRef<router::Client>,
+    router_client: Box<dyn router::Client>,
     topic: String,
     operation: String,
 }
 
 impl Actor for TopicListener {
-    type Mailbox = UnboundedMailbox<Self>;
+    type Mailbox = BoundedMailbox<Self>;
+    fn new_mailbox() -> (Self::Mailbox, <Self::Mailbox as kameo::mailbox::Mailbox<Self>>::Receiver)
+    {
+        BoundedMailbox::new(1000)
+    }
 
-    async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), kameo::error::BoxError> {
+    async fn on_start(&mut self, _actor_ref: ActorRef<Self>) -> Result<(), kameo::error::BoxError> {
         tracing::info! {
             event = "topic_listener_started",
             topic = &self.topic,
@@ -24,7 +32,7 @@ impl Actor for TopicListener {
 
 impl TopicListener {
     pub async fn spawn(
-        router_client: ActorRef<router::Client>,
+        router_client: Box<dyn router::Client>,
         topic: String,
         operation: String,
     ) -> ActorRef<Self> {

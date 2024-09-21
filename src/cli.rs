@@ -1,6 +1,5 @@
 use clap::Parser;
 use serde::Serialize;
-use tracing::info;
 
 use crate::{
     commands::{export_schema, listen},

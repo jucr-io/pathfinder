@@ -46,6 +46,9 @@ impl Into<UniqueListenerMap> for Vec<Listener> {
 pub struct Topic {
     /// The name of the topic.
     pub name: String,
+    /// The maximum number of messages to buffer before notifying the router.
+    #[serde(default)]
+    pub cap: usize,
     /// Optional delay between receiving and notifying the router.
     pub delay_ms: Option<i64>,
     /// The source of the data to use for the topic.
@@ -79,7 +82,7 @@ pub enum TopicDataSerde {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
-enum TopicDataSource {
+pub enum TopicDataSource {
     #[default]
     #[serde(rename = "key")]
     Key,
@@ -87,10 +90,18 @@ enum TopicDataSource {
     Value,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, From, Into)]
 pub struct ProtobufTag(u32);
 impl Default for ProtobufTag {
     fn default() -> Self {
         ProtobufTag(1)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, From, Into)]
+pub struct TopicCap(usize);
+impl Default for TopicCap {
+    fn default() -> Self {
+        TopicCap(64)
     }
 }

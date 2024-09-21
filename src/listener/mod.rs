@@ -1,4 +1,4 @@
-use std::{collections::HashMap, net::SocketAddr};
+use std::collections::HashMap;
 
 use config::Config;
 use kameo::{
@@ -14,17 +14,16 @@ use crate::{
 
 mod topic;
 
-#[derive(Clone)]
 pub struct Listener {
     config: Config,
-    router_client: ActorRef<router::Client>,
+    router_client: Box<dyn router::Client>,
     topics: HashMap<String, ActorRef<TopicListener>>,
 }
 
 impl Actor for Listener {
     type Mailbox = UnboundedMailbox<Self>;
 
-    async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), kameo::error::BoxError> {
+    async fn on_start(&mut self, _actor_ref: ActorRef<Self>) -> Result<(), kameo::error::BoxError> {
         let listeners: Listeners = self.config.get("listeners")?;
         for listener in listeners {
             for topic in listener.topics {
@@ -42,7 +41,7 @@ impl Actor for Listener {
 }
 
 impl Listener {
-    pub async fn spawn(config: &Config, router_client: ActorRef<router::Client>) -> ActorRef<Self> {
+    pub async fn spawn(config: &Config, router_client: Box<dyn router::Client>) -> ActorRef<Self> {
         kameo::spawn(Self { config: config.clone(), router_client, topics: HashMap::new() })
     }
 }
@@ -53,7 +52,7 @@ impl Message<IncomingSubscription> for Listener {
     async fn handle(
         &mut self,
         subscription: IncomingSubscription,
-        ctx: kameo::message::Context<'_, Self, Self::Reply>,
+        _ctx: kameo::message::Context<'_, Self, Self::Reply>,
     ) -> Self::Reply {
         tracing::info! { event = "subscription_received", ?subscription };
 
@@ -66,7 +65,7 @@ impl Message<IncomingSubscription> for Listener {
         .to_owned();
         tracing::info!("check_request {:#?}", check_request);
 
-        let check_response = self.router_client.ask(check_request).send().await?;
+        let check_response = self.router_client.send(check_request).await?;
         tracing::info!("check_response {:#?}", check_response);
 
         Ok(())
@@ -79,7 +78,7 @@ impl Message<IncomingEvent> for Listener {
     async fn handle(
         &mut self,
         event: IncomingEvent,
-        ctx: kameo::message::Context<'_, Self, Self::Reply>,
+        _ctx: kameo::message::Context<'_, Self, Self::Reply>,
     ) -> Self::Reply {
         tracing::info! { event = "event_received", ?event };
 

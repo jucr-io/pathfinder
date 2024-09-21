@@ -18,6 +18,7 @@ listeners:
     ttl_ms: 60000 # optional max time a subscription can run until terminated by the manager
     topics:
       - name: "evses.charging_sessions.integration_events.charging_session_started"
+        cap: 64 # optional max number of messages to be sent to the router
         delay_ms: 500 # optional delay between receiving and notifying the router
         data_serde: "protobuf_sr" # allowed: protobuf, protobuf_sr, json -- default=protobuf_sr
         data_source: "key" # allowed: key, value -- default=key
