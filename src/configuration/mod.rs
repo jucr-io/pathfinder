@@ -12,7 +12,7 @@ pub async fn build(config_path: Option<String>) -> anyhow::Result<Config> {
         builder = builder.add_source(File::with_name(config_path));
     }
     let config = builder.build()?;
-    tracing::debug! { event = "config_built", config_path = ?config_path, config = ?config };
+    tracing::trace! { event = "config_built", config_path = ?config_path, config = ?config };
     Ok(config)
 }
 
