@@ -4,7 +4,10 @@ use kameo::{actor::ActorRef, mailbox::bounded::BoundedMailbox, message::Message,
 
 use crate::{
     configuration,
-    ports::{kv_store::KvStoreFactory, router_client::{self, RouterClient}},
+    ports::{
+        kv_store::KvStoreFactory,
+        router_client::{self, RouterClient},
+    },
 };
 
 use super::subscription_store::{SubscriptionRecord, SubscriptionStore};
@@ -80,9 +83,9 @@ impl Message<IncomingSubscription> for SubscriptionListener {
         self.subscription_store.insert(&record, self.configuration.ttl_ms).await?;
 
         let check_request = router_client::Request::subscription(
-            subscription.callback_url,
-            subscription.id,
-            subscription.verifier,
+            &subscription.callback_url,
+            &subscription.id,
+            &subscription.verifier,
         )
         .check()
         .to_owned();
@@ -118,7 +121,7 @@ type OperationArguments = HashMap<String, String>;
 pub struct IncomingSubscription {
     pub id: String,
     pub verifier: String,
-    pub heartbeat_interval_ms: i64,
+    pub heartbeat_interval_ms: u64,
     pub callback_url: String,
     pub operation: String,
     pub arguments: OperationArguments,

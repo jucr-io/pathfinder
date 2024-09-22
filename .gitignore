@@ -15,3 +15,6 @@
 
 # GraphQL files (might come up when testing locally)
 *.graphql
+
+# Useful for debugging proc-macros
+expand.rs

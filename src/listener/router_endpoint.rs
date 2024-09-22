@@ -36,7 +36,7 @@ impl Actor for RouterEndpoint {
         let app =
             Router::new().route(&path, routing::post(graphql_handler)).with_state(context.clone());
 
-        let _ = tokio::task::spawn(async move {
+        let _ = tokio::spawn(async move {
             tracing::info! { event = "server_starting", hostname, port, path };
             match axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
                 .await
@@ -147,7 +147,7 @@ pub struct Subscription {
     #[serde(rename = "callbackUrl")]
     pub callback_url: String,
     #[serde(rename = "heartbeatIntervalMs")]
-    pub heartbeat_interval_ms: i64, // 0 = disabled, ref from docs
+    pub heartbeat_interval_ms: u64, // 0 = disabled, ref from docs
     #[serde(rename = "subscriptionId")]
     pub subscription_id: String,
     pub verifier: String,

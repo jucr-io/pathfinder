@@ -53,8 +53,8 @@ struct Configuration {
     sasl_mechanism: String,
     sasl_username: Option<String>,
     sasl_password: Option<String>,
-    session_timeout_ms: i64,
-    heartbeat_interval_ms: i64,
+    session_timeout_ms: u64,
+    heartbeat_interval_ms: u64,
 }
 
 #[derive(Clone)]

@@ -1,6 +1,11 @@
+use std::collections::HashMap;
+
 use async_trait::async_trait;
+use derive_more::derive::From;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
+
+use crate::graphql;
 
 #[derive(Clone, Debug)]
 pub enum SubscriptionProtocol {
@@ -43,11 +48,11 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn subscription(callback_url: String, id: String, verifier: String) -> Self {
+    pub fn subscription(callback_url: &String, id: &String, verifier: &String) -> Self {
         let mut request = Request::default();
-        request.callback_url = callback_url;
-        request.set_string_value("id", id);
-        request.set_string_value("verifier", verifier);
+        request.callback_url = callback_url.to_owned();
+        request.set_string_value("id", id.to_owned());
+        request.set_string_value("verifier", verifier.to_owned());
         request.set_string_value("kind", "subscription".to_string());
         request
     }
@@ -69,6 +74,26 @@ impl Request {
                     .collect(),
             );
         }
+        self
+    }
+
+    pub fn next(
+        &mut self,
+        operation: &str,
+        entity_name: &str,
+        mut data: HashMap<String, serde_json::Value>,
+    ) -> &mut Self {
+        self.set_action("next");
+        data.insert(graphql::TYPENAME_KEY.to_string(), serde_json::json!(entity_name));
+        let payload = serde_json::json!({
+            "payload": {
+                "data": {
+                    operation: data
+                }
+            }
+        });
+        self.set_value("payload", payload);
+
         self
     }
 
@@ -97,7 +122,7 @@ impl Into<serde_json::Value> for Request {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, From)]
 pub struct ErrorDetails {
     #[serde(skip_serializing_if = "Option::is_none")]
     message: Option<String>,

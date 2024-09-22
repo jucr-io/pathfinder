@@ -21,7 +21,7 @@ impl KvStore for InMemoryKvStore {
         key: String,
         map_key: String,
         value: Vec<u8>,
-        ttl_ms: i64, // Ignored for now
+        ttl_ms: u64, // Ignored for now
     ) -> anyhow::Result<()> {
         let map = self.store.entry(key.clone()).or_insert_with(HashMap::new);
         map.insert(map_key.clone(), serde_json::to_vec(&value)?);
@@ -29,12 +29,12 @@ impl KvStore for InMemoryKvStore {
         Ok(())
     }
 
-    async fn get_map(&mut self, key: String) -> anyhow::Result<Option<HashMap<String, Vec<u8>>>> {
+    async fn get_map(&mut self, key: String) -> anyhow::Result<HashMap<String, Vec<u8>>> {
         if let Some(map) = self.store.get(&key) {
-            return Ok(Some(map.clone()));
+            return Ok(map.clone());
         }
 
-        Ok(None)
+        Ok(HashMap::new())
     }
 
     async fn delete_map_value(&mut self, key: String, map_key: String) -> anyhow::Result<()> {

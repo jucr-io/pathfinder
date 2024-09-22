@@ -74,7 +74,7 @@ impl TopicListener {
 
         let actor_ref = kameo::spawn(actor);
 
-        let _ = tokio::task::spawn(run_message_consumer(
+        let _ = tokio::spawn(run_message_consumer(
             actor_ref.clone(),
             configuration.topics.iter().map(|topic| topic.name.clone()).collect(),
             message_consumer_factory,

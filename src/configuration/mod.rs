@@ -28,7 +28,7 @@ pub struct Listener {
     pub id_key: String,
     /// The max TTL for the subscription. When this time is over, all open subscriptions will be
     /// terminated.
-    pub ttl_ms: i64,
+    pub ttl_ms: u64,
     /// The topics to listen for changes on.
     pub topics: Vec<Topic>,
 }
@@ -49,7 +49,7 @@ pub struct Topic {
     /// The name of the topic.
     pub name: String,
     /// Optional delay between receiving and notifying the router.
-    pub delay_ms: Option<i64>,
+    pub delay_ms: Option<u64>,
     /// The source of the data to use for the topic.
     #[serde(default = "TopicDataSerde::default")]
     pub data_serde: TopicDataSerde,
@@ -80,9 +80,9 @@ pub struct Topic {
 pub enum TopicDataSerde {
     #[serde(rename = "protobuf")]
     Protobuf,
-    #[default]
     #[serde(rename = "protobuf_wire")]
     ProtobufWire,
+    #[default]
     #[serde(rename = "json")]
     Json,
 }

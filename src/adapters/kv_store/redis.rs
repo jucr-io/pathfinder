@@ -18,17 +18,17 @@ impl KvStore for RedisKvStore {
         key: String,
         map_key: String,
         value: Vec<u8>,
-        ttl_ms: i64,
+        ttl_ms: u64,
     ) -> anyhow::Result<()> {
         let _: () = self.connection.hset(&key, &map_key, value).await?;
-        let _: () = self.connection.pexpire(&key, ttl_ms).await?;
+        let _: () = self.connection.pexpire(&key, ttl_ms.try_into()?).await?;
         tracing::debug! { event = "map_key_inserted", key, map_key, ttl_ms };
         Ok(())
     }
 
-    async fn get_map(&mut self, key: String) -> anyhow::Result<Option<HashMap<String, Vec<u8>>>> {
+    async fn get_map(&mut self, key: String) -> anyhow::Result<HashMap<String, Vec<u8>>> {
         let map: HashMap<String, Vec<u8>> = self.connection.hgetall(key).await?;
-        Ok(Some(map))
+        Ok(map)
     }
 
     async fn delete_map_value(&mut self, key: String, map_key: String) -> anyhow::Result<()> {

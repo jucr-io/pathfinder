@@ -2,7 +2,7 @@ use clap::Parser;
 use serde::Serialize;
 
 use crate::{
-    commands::{export_schema, listen},
+    commands::{export_schema, listen, publish_schema},
     configuration::{self},
 };
 
@@ -37,6 +37,6 @@ pub async fn run() -> anyhow::Result<()> {
     match cli.command {
         Command::Listen => listen::run(&config).await,
         Command::ExportSchema(args) => export_schema::run(&config, args.path).await,
-        Command::PublishSchema => Ok(()),
+        Command::PublishSchema => publish_schema::run(&config).await,
     }
 }

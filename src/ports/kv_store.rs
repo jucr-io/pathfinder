@@ -10,11 +10,11 @@ pub trait KvStore: Send + Sync {
         key: String,
         map_key: String,
         value: Vec<u8>,
-        ttl_ms: i64,
+        ttl_ms: u64,
     ) -> anyhow::Result<()>;
 
     /// Gets an entire map.
-    async fn get_map(&mut self, key: String) -> anyhow::Result<Option<HashMap<String, Vec<u8>>>>;
+    async fn get_map(&mut self, key: String) -> anyhow::Result<HashMap<String, Vec<u8>>>;
 
     /// Deletes a single value in a map.
     async fn delete_map_value(&mut self, key: String, map_key: String) -> anyhow::Result<()>;
