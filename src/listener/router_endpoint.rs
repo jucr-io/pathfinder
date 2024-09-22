@@ -17,13 +17,13 @@ use kameo::{
 };
 use serde::{Deserialize, Serialize};
 
-pub struct Endpoint {
+pub struct RouterEndpoint {
     config: Config,
     listener: ActorRef<Listener>,
     subscription_inject_peer: Option<String>,
 }
 
-impl Actor for Endpoint {
+impl Actor for RouterEndpoint {
     type Mailbox = UnboundedMailbox<Self>;
 
     async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), kameo::error::BoxError> {
@@ -52,14 +52,11 @@ impl Actor for Endpoint {
     }
 }
 
-impl Endpoint {
-    pub async fn spawn(
-        config: &Config,
-        subscription_listener: ActorRef<Listener>,
-    ) -> ActorRef<Self> {
+impl RouterEndpoint {
+    pub async fn spawn(config: &Config, listener: ActorRef<Listener>) -> ActorRef<Self> {
         kameo::spawn(Self {
             config: config.clone(),
-            listener: subscription_listener,
+            listener,
             subscription_inject_peer: config
                 .get_string("router_endpoint.subscription.inject_peer")
                 .ok(),
@@ -67,7 +64,7 @@ impl Endpoint {
     }
 }
 
-impl Message<(MessageFromRouter, SocketAddr)> for Endpoint {
+impl Message<(MessageFromRouter, SocketAddr)> for RouterEndpoint {
     type Reply = anyhow::Result<serde_json::Value>;
 
     async fn handle(
@@ -128,7 +125,7 @@ async fn graphql_handler(
 
 #[derive(Clone, Debug)]
 struct Context {
-    endpoint: ActorRef<Endpoint>,
+    endpoint: ActorRef<RouterEndpoint>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

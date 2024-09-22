@@ -1,14 +1,14 @@
 use derive_more::derive::Into;
 use serde::{Deserialize, Serialize};
 
-use crate::kv_store;
+use crate::ports::kv_store::{KvStore, KvStoreFactory};
 
 pub(crate) struct SubscriptionStore {
-    kv_store: Box<dyn kv_store::KvStore>,
+    kv_store: Box<dyn KvStore>,
 }
 
 impl SubscriptionStore {
-    pub async fn new(kv_store_factory: Box<dyn kv_store::KvStoreFactory>) -> anyhow::Result<Self> {
+    pub async fn new(kv_store_factory: Box<dyn KvStoreFactory>) -> anyhow::Result<Self> {
         let kv_store = kv_store_factory.create().await?;
         Ok(Self { kv_store })
     }

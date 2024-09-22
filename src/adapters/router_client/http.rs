@@ -1,25 +1,22 @@
 use async_trait::async_trait;
 
-use crate::router::{
-    self,
-    client::{EmptyResponse, Request, Response},
-};
+use crate::ports::router_client::{EmptyResponse, Request, Response, RouterClient};
 
 const SUBSCRIPTION_PROTOCOL_HEADER: &str = "subscription-protocol";
 
 #[derive(Clone)]
-pub struct HttpClient {
+pub struct HttpRouterClient {
     inner: reqwest::Client,
 }
 
-impl HttpClient {
+impl HttpRouterClient {
     pub fn new() -> Self {
         Self { inner: reqwest::Client::new() }
     }
 }
 
 #[async_trait]
-impl router::Client for HttpClient {
+impl RouterClient for HttpRouterClient {
     async fn send(&self, request: &Request) -> anyhow::Result<Response> {
         let result = self.inner.post(&request.callback_url).json(&request).send().await?;
         let status_code = result.status();
@@ -41,7 +38,7 @@ impl router::Client for HttpClient {
         anyhow::bail!(response.unwrap_or_default());
     }
 
-    fn clone_box(&self) -> Box<dyn router::Client> {
-        Box::new(HttpClient { inner: self.inner.clone() })
+    fn clone_box(&self) -> Box<dyn RouterClient> {
+        Box::new(HttpRouterClient { inner: self.inner.clone() })
     }
 }

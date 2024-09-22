@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use std::collections::HashMap;
 
-use crate::kv_store::{KvStore, KvStoreFactory};
+use crate::ports::kv_store::{KvStore, KvStoreFactory};
 
 #[derive(Clone)]
 pub struct InMemoryKvStore {
@@ -72,7 +72,7 @@ impl KvStoreFactory for InMemoryKvStoreFactory {
         Ok(Box::new(InMemoryKvStore::new()))
     }
 
-    fn clone_box(&self) -> Box<dyn crate::kv_store::KvStoreFactory> {
+    fn clone_box(&self) -> Box<dyn KvStoreFactory> {
         Box::new(Self { _client: self._client.clone() })
     }
 }

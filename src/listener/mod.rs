@@ -9,11 +9,14 @@ use subscription::SubscriptionListener;
 
 use crate::{
     configuration::{self},
-    kv_store, message_consumer,
-    router::{self},
+    ports::{
+        kv_store::KvStoreFactory, message_consumer::MessageConsumerFactory,
+        router_client::RouterClient,
+    },
 };
 
 mod message_processor;
+mod router_endpoint;
 mod subscription;
 mod subscription_store;
 mod topic;
@@ -46,9 +49,9 @@ impl Actor for Listener {
 impl Listener {
     pub async fn spawn(
         config: &Config,
-        router_client: Box<dyn router::Client>,
-        kv_store_factory: Box<dyn kv_store::KvStoreFactory>,
-        message_consumer_factory: Box<dyn message_consumer::MessageConsumerFactory>,
+        router_client: Box<dyn RouterClient>,
+        kv_store_factory: Box<dyn KvStoreFactory>,
+        message_consumer_factory: Box<dyn MessageConsumerFactory>,
     ) -> anyhow::Result<ActorRef<Self>> {
         let mut actor = Self {
             config: config.clone(),
@@ -78,7 +81,8 @@ impl Listener {
 
         let actor_ref = kameo::spawn(actor);
 
-        let _router_endpoint = router::Endpoint::spawn(&config, actor_ref.clone()).await;
+        let _router_endpoint =
+            router_endpoint::RouterEndpoint::spawn(&config, actor_ref.clone()).await;
 
         Ok(actor_ref)
     }

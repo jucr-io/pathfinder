@@ -5,7 +5,7 @@ use config::Config;
 use redis::{AsyncCommands, ConnectionLike};
 use serde::Deserialize;
 
-use crate::kv_store::{KvStore, KvStoreFactory};
+use crate::ports::kv_store::{KvStore, KvStoreFactory};
 
 pub struct RedisKvStore {
     connection: redis::aio::ConnectionManager,

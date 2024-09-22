@@ -10,10 +10,11 @@ use serde::Deserialize;
 
 type AdminClient = admin::AdminClient<DefaultClientContext>;
 
-use crate::message_consumer::{MessageConsumer, MessageConsumerFactory, RawMessage};
+use crate::ports::message_consumer::{MessageConsumer, MessageConsumerFactory, RawMessage};
 
 pub struct KafkaMessageConsumer {
     consumer: rdkafka::consumer::StreamConsumer,
+    #[allow(dead_code)]
     admin_client: AdminClient,
 }
 

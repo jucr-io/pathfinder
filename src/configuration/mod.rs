@@ -56,12 +56,18 @@ pub struct Topic {
     /// The source of the data to use for the topic.
     #[serde(default = "TopicDataSource::default")]
     pub data_source: TopicDataSource,
+    /// If enabled, strips out all not-declared fields from the incoming data.
+    /// Only used when data_serde is set to json.
+    #[serde(default)]
+    pub strict_mapping: bool,
     /// Mapping for incoming protobuf data.
     /// Only used when data_serde is set to protobuf/protobuf-sr.
-    pub protobuf_mapping: Option<ProtobufMapping>,
+    #[serde(default)]
+    pub protobuf_mapping: ProtobufMapping,
     /// Mapping for incoming json data.
     /// Only used when data_serde is set to json.
-    pub json_mapping: Option<JsonMapping>,
+    #[serde(default)]
+    pub json_mapping: JsonMapping,
     /// Whether the topic terminates subscriptions.
     /// If the manager receives a message on a topic that terminates subscriptions, it will
     /// terminate all subscriptions that are listening on this topic AFTER sending a final next
@@ -75,8 +81,8 @@ pub enum TopicDataSerde {
     #[serde(rename = "protobuf")]
     Protobuf,
     #[default]
-    #[serde(rename = "protobuf_sr")]
-    ProtobufSr,
+    #[serde(rename = "protobuf_wire")]
+    ProtobufWire,
     #[serde(rename = "json")]
     Json,
 }
@@ -98,19 +104,21 @@ impl Default for ProtobufTag {
     }
 }
 
-pub type ProtobufMapping = HashMap<String, u32>;
-pub type JsonMapping = HashMap<String, String>;
-// #[derive(Clone, Debug, Serialize, Deserialize, Default)]
-// pub struct ProtobufMapItem {
-//     pub key: String,
-//     pub tag: u32,
-// }
+#[derive(Clone, Debug, Serialize, Deserialize, From, Into)]
+pub struct ProtobufMapping(pub HashMap<String, u32>);
+impl Default for ProtobufMapping {
+    fn default() -> Self {
+        HashMap::from_iter(vec![(String::from("id"), 1)]).into()
+    }
+}
 
-// #[derive(Clone, Debug, Serialize, Deserialize, Default)]
-// pub struct JsonMapItem {
-//     pub key: String,
-//     pub tag: u32,
-// }
+#[derive(Clone, Debug, Serialize, Deserialize, From, Into)]
+pub struct JsonMapping(pub HashMap<String, String>);
+impl Default for JsonMapping {
+    fn default() -> Self {
+        HashMap::new().into()
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, From, Into)]
 pub struct TopicCap(usize);

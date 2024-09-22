@@ -1,2 +1,2 @@
 pub mod kafka;
-pub use kafka::{KafkaMessageConsumer, KafkaMessageConsumerFactory};
+pub use kafka::KafkaMessageConsumerFactory;

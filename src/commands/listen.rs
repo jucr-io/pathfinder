@@ -6,7 +6,7 @@ pub async fn run(config: &Config) -> anyhow::Result<()> {
     let kv_store_factory = adapters::kv_store::RedisKvStoreFactory::new(&config).await?;
     let message_consumer_factory =
         adapters::message_consumer::KafkaMessageConsumerFactory::new(&config).await?;
-    let router_client = adapters::router::HttpClient::new();
+    let router_client = adapters::router_client::HttpRouterClient::new();
 
     let listener = listener::Listener::spawn(
         &config,

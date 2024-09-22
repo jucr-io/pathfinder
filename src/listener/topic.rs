@@ -6,9 +6,12 @@ use kameo::{
 };
 
 use crate::{
-    configuration, kv_store,
-    message_consumer::{self, RawMessage},
-    router,
+    configuration,
+    ports::{
+        kv_store::KvStoreFactory,
+        message_consumer::{self, MessageConsumerFactory},
+        router_client::RouterClient,
+    },
 };
 
 use super::message_processor::MessageProcessor;
@@ -16,7 +19,7 @@ use super::message_processor::MessageProcessor;
 const MAILBOX_CAP: usize = 512;
 
 pub struct TopicListener {
-    configuration: configuration::Listener,
+    // configuration: configuration::Listener,
     topics: HashMap<String, configuration::Topic>,
     message_processors: HashMap<String, ActorRef<MessageProcessor>>,
 }
@@ -44,17 +47,17 @@ impl Actor for TopicListener {
 
 impl TopicListener {
     pub(crate) async fn spawn(
-        router_client: Box<dyn router::Client>,
-        kv_store_factory: Box<dyn kv_store::KvStoreFactory>,
+        router_client: Box<dyn RouterClient>,
+        kv_store_factory: Box<dyn KvStoreFactory>,
         configuration: configuration::Listener,
-        message_consumer_factory: Box<dyn message_consumer::MessageConsumerFactory>,
+        message_consumer_factory: Box<dyn MessageConsumerFactory>,
     ) -> anyhow::Result<ActorRef<Self>> {
         let topics: HashMap<String, configuration::Topic> =
             configuration.topics.iter().map(|topic| (topic.name.clone(), topic.clone())).collect();
 
         let mut actor = Self {
             message_processors: HashMap::new(),
-            configuration: configuration.clone(),
+            // configuration: configuration.clone(),
             topics,
         };
 
@@ -82,12 +85,12 @@ impl TopicListener {
     }
 }
 
-impl Message<RawMessage> for TopicListener {
+impl Message<message_consumer::RawMessage> for TopicListener {
     type Reply = ();
 
     async fn handle(
         &mut self,
-        message: RawMessage,
+        message: message_consumer::RawMessage,
         _ctx: kameo::message::Context<'_, Self, Self::Reply>,
     ) -> Self::Reply {
         tracing::debug! {
@@ -125,25 +128,3 @@ async fn run_message_consumer(
         }
     }
 }
-
-// impl Message<IncomingEvent> for TopicListener {
-//     type Reply = ();
-
-//     async fn handle(
-//         &mut self,
-//         event: IncomingEvent,
-//         _ctx: kameo::message::Context<'_, Self, Self::Reply>,
-//     ) -> Self::Reply {
-//         tracing::info! {
-//             event = "event_received",
-//             event = ?event
-//         };
-//     }
-// }
-
-// #[derive(Debug, Clone)]
-// pub struct IncomingEvent {
-//     pub topic: String,
-//     pub key: Option<Vec<u8>>,
-//     pub value: Vec<u8>,
-// }

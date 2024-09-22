@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use kameo::{actor::ActorRef, mailbox::bounded::BoundedMailbox, message::Message, Actor};
 
 use crate::{
-    configuration, kv_store,
-    router::{self},
+    configuration,
+    ports::{kv_store::KvStoreFactory, router_client::{self, RouterClient}},
 };
 
 use super::subscription_store::{SubscriptionRecord, SubscriptionStore};
@@ -12,7 +12,7 @@ use super::subscription_store::{SubscriptionRecord, SubscriptionStore};
 const MAILBOX_CAP: usize = 256;
 
 pub(crate) struct SubscriptionListener {
-    router_client: Box<dyn router::Client>,
+    router_client: Box<dyn RouterClient>,
     subscription_store: SubscriptionStore,
     configuration: configuration::Listener,
 }
@@ -36,8 +36,8 @@ impl Actor for SubscriptionListener {
 
 impl SubscriptionListener {
     pub(crate) async fn spawn(
-        router_client: Box<dyn router::Client>,
-        kv_store_factory: Box<dyn kv_store::KvStoreFactory>,
+        router_client: Box<dyn RouterClient>,
+        kv_store_factory: Box<dyn KvStoreFactory>,
         configuration: configuration::Listener,
     ) -> anyhow::Result<ActorRef<Self>> {
         let subscription_store = SubscriptionStore::new(kv_store_factory.clone()).await?;
@@ -79,7 +79,7 @@ impl Message<IncomingSubscription> for SubscriptionListener {
         };
         self.subscription_store.insert(&record, self.configuration.ttl_ms).await?;
 
-        let check_request = router::client::Request::subscription(
+        let check_request = router_client::Request::subscription(
             subscription.callback_url,
             subscription.id,
             subscription.verifier,
