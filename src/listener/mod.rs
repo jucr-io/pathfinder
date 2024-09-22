@@ -13,6 +13,7 @@ use crate::{
     router::{self},
 };
 
+mod message_processor;
 mod subscription;
 mod subscription_store;
 mod topic;
@@ -36,6 +37,7 @@ impl Actor for Listener {
         for topic_listener in self.topic_listeners.values() {
             actor_ref.link_child(topic_listener).await;
         }
+        tracing::info! { event = "listener_started", actor=?actor_ref };
         Ok(())
     }
 }

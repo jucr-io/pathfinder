@@ -12,7 +12,7 @@ router_endpoint:
     inject_peer: "router.router"
 message_consumer:
   kafka:
-    brokers: "localhost:9092"
+    # brokers: "localhost:9092"
     security_protocol: "plaintext"
     sasl_mechanism: "plain"
     # sasl_username: "abc"
@@ -22,12 +22,13 @@ message_consumer:
 
 kv_store:
   redis:
-    host: "127.0.0.1"
-    port: 6379
-    tls_enabled: false
+    enabled: true
+    # host: "127.0.0.1"
+    # port: 6379
+    # tls_enabled: false
+    # db: 0
     # username: "jucr"
     # password: "jucr"
-    # db: 0
 
 listeners:
   - operation: "chargingSessionChanged"
@@ -46,7 +47,6 @@ listeners:
         json_mapping: # only for json -- default=id
           - key: "id"
             property: "accountId" # optional -- default key=property
-        # protobuf_id_tag: 1 # only for protobuf, protobuf_sr -- default=1
         # rate_limit
       - name: "evses.charging_sessions.integration_events.charging_session_updated"
       - name: "evses.charging_sessions.integration_events.charging_session_terminated"

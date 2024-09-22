@@ -11,20 +11,18 @@ use kameo::{
 
 use crate::{
     configuration, kv_store,
-    message_consumer::{self, RawMessage, RawMessageResult},
+    message_consumer::{self, RawMessage},
     router,
 };
 
-use super::subscription_store::SubscriptionStore;
+use super::{message_processor::MessageProcessor, subscription_store::SubscriptionStore};
 
-const MAILBOX_CAP: usize = 64;
+const MAILBOX_CAP: usize = 512;
 
 pub struct TopicListener {
-    router_client: Box<dyn router::Client>,
-    subscription_store: SubscriptionStore,
     configuration: configuration::Listener,
-    // message_consumer: Box<dyn message_consumer::MessageConsumer>,
     topics: HashMap<String, configuration::Topic>,
+    message_processors: HashMap<String, ActorRef<MessageProcessor>>,
 }
 
 impl Actor for TopicListener {
@@ -35,14 +33,14 @@ impl Actor for TopicListener {
     }
 
     async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), kameo::error::BoxError> {
-        // let topics = self.topics.keys().map(|topic| topic.as_str()).collect::<Vec<&str>>();
-        // self.message_consumer.subscribe(&topics).await?;
-
-        // actor_ref.attach_stream(self.message_consumer.recv().into_stream(), (), ()).await?;
-
+        for message_processor in self.message_processors.values() {
+            actor_ref.link_child(message_processor).await;
+        }
+        let topics = self.topics.keys();
         tracing::info! {
             event = "topic_listener_started",
-            // topics = ?topics
+            topics = ?topics,
+            actor = ?actor_ref,
         };
         Ok(())
     }
@@ -54,19 +52,28 @@ impl TopicListener {
         kv_store_factory: Box<dyn kv_store::KvStoreFactory>,
         configuration: configuration::Listener,
         message_consumer_factory: Box<dyn message_consumer::MessageConsumerFactory>,
-        // message_consumer: Box<dyn message_consumer::MessageConsumer>,
     ) -> anyhow::Result<ActorRef<Self>> {
-        let subscription_store = SubscriptionStore::new(kv_store_factory.clone()).await?;
-
         let topics: HashMap<String, configuration::Topic> =
             configuration.topics.iter().map(|topic| (topic.name.clone(), topic.clone())).collect();
 
-        let actor_ref = kameo::spawn(Self {
-            router_client,
+        let mut actor = Self {
+            message_processors: HashMap::new(),
             configuration: configuration.clone(),
-            subscription_store,
             topics,
-        });
+        };
+
+        for topic in &configuration.topics {
+            let message_processor = MessageProcessor::spawn(
+                router_client.clone(),
+                kv_store_factory.clone(),
+                configuration.clone(),
+                topic.clone(),
+            )
+            .await?;
+            actor.message_processors.insert(topic.name.clone(), message_processor);
+        }
+
+        let actor_ref = kameo::spawn(actor);
 
         let _ = tokio::task::spawn(run_message_consumer(
             actor_ref.clone(),
@@ -91,13 +98,10 @@ impl Message<RawMessage> for TopicListener {
             event = "message_received",
             message = ?message
         }
-        // let topic = self.topics.get(&message.topic);
-        // if let Some(topic) = topic {
-        //     let key = message.key.clone();
-        //     let value = message.value.clone();
-        //     let event = IncomingEvent { topic: message.topic, key, value };
-        //     self.router_client.send(event).await;
-        // }
+
+        if let Some(proccessor) = self.message_processors.get(&message.topic) {
+            let _ = proccessor.tell(message).send().await;
+        }
     }
 }
 

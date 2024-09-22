@@ -4,13 +4,15 @@ use config::{Config, Environment, File};
 use derive_more::derive::{From, Into};
 use serde::{Deserialize, Serialize};
 
+const SEPARATOR: &str = "__";
+
 pub async fn build(config_path: Option<String>) -> anyhow::Result<Config> {
-    let mut builder = Config::builder().add_source(Environment::default());
-    if let Some(config_path) = config_path {
-        builder = builder.add_source(File::with_name(&config_path));
+    let mut builder = Config::builder().add_source(Environment::default().separator(SEPARATOR));
+    if let Some(ref config_path) = config_path {
+        builder = builder.add_source(File::with_name(config_path));
     }
     let config = builder.build()?;
-
+    tracing::debug! { event = "config_built", config_path = ?config_path, config = ?config };
     Ok(config)
 }
 
@@ -54,11 +56,12 @@ pub struct Topic {
     /// The source of the data to use for the topic.
     #[serde(default = "TopicDataSource::default")]
     pub data_source: TopicDataSource,
-    /// The protobuf tag to use for the topic.
-    /// Only valid for protobuf/protobuf_sr data_serde.
-    /// Defaults to 1.
-    #[serde(default)]
-    pub protobuf_tag: ProtobufTag,
+    /// Mapping for incoming protobuf data.
+    /// Only used when data_serde is set to protobuf/protobuf-sr.
+    pub protobuf_mapping: Option<Vec<ProtobufMapItem>>,
+    /// Mapping for incoming json data.
+    /// Only used when data_serde is set to json.
+    pub json_mapping: Option<Vec<JsonMapItem>>,
     /// Whether the topic terminates subscriptions.
     /// If the manager receives a message on a topic that terminates subscriptions, it will
     /// terminate all subscriptions that are listening on this topic AFTER sending a final next
@@ -93,6 +96,18 @@ impl Default for ProtobufTag {
     fn default() -> Self {
         ProtobufTag(1)
     }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+pub struct ProtobufMapItem {
+    pub key: String,
+    pub tag: u32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+pub struct JsonMapItem {
+    pub key: String,
+    pub tag: u32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, From, Into)]

@@ -20,14 +20,14 @@ services:
       LOG_FORMAT: "fmt"
       TRACING_OTLP_ENDPOINT: "http://jaeger:4317"
       # Basic Service
-      ROUTER_ENDPOINT_PORT: 3001
+      ROUTER_ENDPOINT__PORT: 3001
       # Kafka
-      MESSAGE_CONSUMER_KAFKA_BROKERS: "kafka-broker:29092"
+      MESSAGE_CONSUMER__KAFKA__BROKERS: "kafka-broker:29092"
       # Redis
-      KV_STORE_REDIS_HOST: "redis"
-      KV_STORE_REDIS_PORT: 7559
-      KV_STORE_REDIS_PASSWORD: "jucr12"
-      KV_STORE_REDIS_TLS_ENABLED: false
+      KV_STORE__REDIS__HOST: "redis"
+      KV_STORE__REDIS__PORT: 7559
+      KV_STORE__REDIS__PASSWORD: "jucr12"
+      KV_STORE__REDIS__TLS_ENABLED: false
     volumes:
       - ..:/workspace:cached
       - type: bind

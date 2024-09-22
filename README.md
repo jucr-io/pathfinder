@@ -15,3 +15,10 @@ The implementation follows the [Twelve Factors](https://12factor.net).
 [@jucr-io/backend](https://github.com/orgs/jucr-io/teams/backend)
 
 </div>
+
+export ROUTER_ENDPOINT__PORT=3001 &&
+export MESSAGE_CONSUMER__KAFKA__BROKERS="kafka-broker:29092" &&
+export KV_STORE__REDIS__HOST="redis" &&
+export KV_STORE__REDIS__PORT=7559 &&
+export KV_STORE__REDIS__PASSWORD="jucr12" &&
+export KV_STORE__REDIS__TLS_ENABLED=false &&

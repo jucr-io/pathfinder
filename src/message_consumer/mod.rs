@@ -7,8 +7,6 @@ pub struct RawMessage {
     pub topic: String,
 }
 
-pub type RawMessageResult = anyhow::Result<RawMessage>;
-
 #[async_trait]
 pub trait MessageConsumer: Send + Sync {
     /// Subscribes to a list of topics.

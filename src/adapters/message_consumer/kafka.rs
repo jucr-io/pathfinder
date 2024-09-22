@@ -1,20 +1,36 @@
 use async_trait::async_trait;
 use config::Config;
 use rdkafka::{
+    admin,
+    client::DefaultClientContext,
     consumer::{Consumer, StreamConsumer},
     Message,
 };
 use serde::Deserialize;
 
+type AdminClient = admin::AdminClient<DefaultClientContext>;
+
 use crate::message_consumer::{MessageConsumer, MessageConsumerFactory, RawMessage};
 
 pub struct KafkaMessageConsumer {
     consumer: rdkafka::consumer::StreamConsumer,
+    admin_client: AdminClient,
 }
 
 #[async_trait]
 impl MessageConsumer for KafkaMessageConsumer {
     async fn subscribe(&mut self, topics: &Vec<String>) -> anyhow::Result<()> {
+        #[cfg(feature = "create-kafka-topics")]
+        {
+            let new_topics: Vec<admin::NewTopic> = topics
+                .iter()
+                .map(|t| admin::NewTopic::new(t, 1, admin::TopicReplication::Fixed(1)))
+                .collect();
+            let result =
+                self.admin_client.create_topics(new_topics.iter(), &Default::default()).await;
+            tracing::info! { event="topics_created", ?result };
+        }
+
         self.consumer
             .subscribe(&topics.iter().map(|topic| topic.as_str()).collect::<Vec<&str>>())?;
         Ok(())
@@ -72,25 +88,25 @@ impl KafkaMessageConsumerFactory {
         Ok(Self { client: client_config })
     }
 
-    async fn spawn(&self, group_id: String) -> anyhow::Result<StreamConsumer> {
+    async fn spawn(&self, group_id: String) -> anyhow::Result<(StreamConsumer, AdminClient)> {
         let mut config = self.client.clone();
         config.set(
             "group.id",
             format!("{}-{}", config.get("group.id").unwrap_or_default(), group_id),
         );
         let consumer: StreamConsumer = config.create()?;
-
+        let admin_client: AdminClient = config.create()?;
         tracing::info! { event = "consumer_spawned" };
-        Ok(consumer)
+        Ok((consumer, admin_client))
     }
 }
 
 #[async_trait]
 impl MessageConsumerFactory for KafkaMessageConsumerFactory {
     async fn create(&self, group_id: String) -> anyhow::Result<Box<dyn MessageConsumer>> {
-        let consumer = self.spawn(group_id).await?;
+        let (consumer, admin_client) = self.spawn(group_id).await?;
 
-        Ok(Box::new(KafkaMessageConsumer { consumer }))
+        Ok(Box::new(KafkaMessageConsumer { consumer, admin_client }))
     }
 
     fn clone_box(&self) -> Box<dyn MessageConsumerFactory> {

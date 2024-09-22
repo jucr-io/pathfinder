@@ -24,8 +24,12 @@ impl Actor for SubscriptionListener {
         BoundedMailbox::new(MAILBOX_CAP)
     }
 
-    async fn on_start(&mut self, _actor_ref: ActorRef<Self>) -> Result<(), kameo::error::BoxError> {
-        tracing::info! { event = "subscription_listener_started", operation=self.configuration.operation };
+    async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), kameo::error::BoxError> {
+        tracing::info! {
+            event = "subscription_listener_started",
+            operation = self.configuration.operation,
+            actor = ?actor_ref
+        };
         Ok(())
     }
 }
