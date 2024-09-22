@@ -44,6 +44,18 @@ impl Actor for Listener {
         tracing::info! { event = "listener_started", actor=?actor_ref };
         Ok(())
     }
+
+    async fn on_stop(
+        self,
+        actor_ref: kameo::actor::WeakActorRef<Self>,
+        reason: kameo::error::ActorStopReason,
+    ) -> Result<(), kameo::error::BoxError> {
+        tracing::info! {
+            event = "listener_stopped",
+            reason = ?reason,
+        };
+        Ok(())
+    }
 }
 
 impl Listener {
