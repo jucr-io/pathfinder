@@ -2,47 +2,82 @@ use std::collections::HashMap;
 
 use config::Config;
 use kameo::{
-    actor::ActorRef, mailbox::unbounded::UnboundedMailbox, message::Message, request::MessageSend,
-    Actor,
+    actor::ActorRef, mailbox::unbounded::UnboundedMailbox, message::Message, reply::ForwardedReply,
+    request::MessageSend, Actor,
 };
-use topic::TopicListener;
+use subscription::SubscriptionListener;
 
 use crate::{
-    configuration::Listeners,
-    router::{self, client as router_client},
+    configuration::{self, Listeners},
+    kv_store, message_consumer,
+    router::{self},
 };
 
+mod subscription;
+mod subscription_store;
 mod topic;
+
+pub use subscription::IncomingSubscription;
+pub use topic::TopicListener;
 
 pub struct Listener {
     config: Config,
-    router_client: Box<dyn router::Client>,
-    topics: HashMap<String, ActorRef<TopicListener>>,
+    topic_listeners: HashMap<String, ActorRef<TopicListener>>,
+    subscription_listeners: HashMap<String, ActorRef<SubscriptionListener>>,
 }
 
 impl Actor for Listener {
     type Mailbox = UnboundedMailbox<Self>;
 
-    async fn on_start(&mut self, _actor_ref: ActorRef<Self>) -> Result<(), kameo::error::BoxError> {
-        let listeners: Listeners = self.config.get("listeners")?;
-        for listener in listeners {
-            for topic in listener.topics {
-                let topic_listener = TopicListener::spawn(
-                    self.router_client.clone(),
-                    topic.name.clone(),
-                    listener.operation.clone(),
-                )
-                .await;
-                self.topics.insert(topic.name.clone(), topic_listener);
-            }
+    async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), kameo::error::BoxError> {
+        for subscription_listener in self.subscription_listeners.values() {
+            actor_ref.link_child(subscription_listener).await;
+        }
+        for topic_listener in self.topic_listeners.values() {
+            actor_ref.link_child(topic_listener).await;
         }
         Ok(())
     }
 }
 
 impl Listener {
-    pub async fn spawn(config: &Config, router_client: Box<dyn router::Client>) -> ActorRef<Self> {
-        kameo::spawn(Self { config: config.clone(), router_client, topics: HashMap::new() })
+    pub async fn spawn(
+        config: &Config,
+        router_client: Box<dyn router::Client>,
+        kv_store_factory: Box<dyn kv_store::KvStoreFactory>,
+        message_consumer_factory: Box<dyn message_consumer::MessageConsumerFactory>,
+    ) -> anyhow::Result<ActorRef<Self>> {
+        let mut actor = Self {
+            config: config.clone(),
+            topic_listeners: HashMap::new(),
+            subscription_listeners: HashMap::new(),
+        };
+
+        let listeners: configuration::Listeners = config.get("listeners")?;
+        for listener in listeners {
+            let subscription_listener = SubscriptionListener::spawn(
+                router_client.clone(),
+                kv_store_factory.clone(),
+                listener.clone(),
+            )
+            .await?;
+            actor.subscription_listeners.insert(listener.operation.clone(), subscription_listener);
+
+            let topic_listener = TopicListener::spawn(
+                router_client.clone(),
+                kv_store_factory.clone(),
+                listener.clone(),
+                message_consumer_factory.clone(),
+            )
+            .await?;
+            actor.topic_listeners.insert(listener.operation.clone(), topic_listener);
+        }
+
+        let actor_ref = kameo::spawn(actor);
+
+        let router_endpoint = router::Endpoint::spawn(&config, actor_ref.clone()).await;
+
+        Ok(actor_ref)
     }
 }
 
@@ -54,55 +89,13 @@ impl Message<IncomingSubscription> for Listener {
         subscription: IncomingSubscription,
         _ctx: kameo::message::Context<'_, Self, Self::Reply>,
     ) -> Self::Reply {
-        tracing::info! { event = "subscription_received", ?subscription };
-
-        let check_request = router_client::Request::subscription(
-            subscription.callback_url,
-            subscription.id,
-            subscription.verifier,
-        )
-        .check()
-        .to_owned();
-        tracing::info!("check_request {:#?}", check_request);
-
-        let check_response = self.router_client.send(check_request).await?;
-        tracing::info!("check_response {:#?}", check_response);
-
-        Ok(())
-    }
-}
-
-impl Message<IncomingEvent> for Listener {
-    type Reply = ();
-
-    async fn handle(
-        &mut self,
-        event: IncomingEvent,
-        _ctx: kameo::message::Context<'_, Self, Self::Reply>,
-    ) -> Self::Reply {
-        tracing::info! { event = "event_received", ?event };
-
-        if let Some(topic_listener) = self.topics.get(&event.topic) {
-            let forward_result = topic_listener.tell(event).send().await;
+        let listener = self.subscription_listeners.get(&subscription.operation);
+        if let Some(listener) = listener {
+            // TODO: this needs to be properly handled to not block the actor
+            listener.ask(subscription).send().await?;
+            Ok(())
+        } else {
+            anyhow::bail!("no listener found for operation '{}'", subscription.operation);
         }
     }
-}
-
-type OperationArguments = HashMap<String, String>;
-
-#[derive(Debug, Clone)]
-pub struct IncomingSubscription {
-    pub id: String,
-    pub verifier: String,
-    pub heartbeat_interval_ms: i64,
-    pub callback_url: String,
-    pub operation_name: String,
-    pub operation_arguments: OperationArguments,
-}
-
-#[derive(Debug, Clone)]
-pub struct IncomingEvent {
-    pub topic: String,
-    pub key: Option<Vec<u8>>,
-    pub value: Vec<u8>,
 }

@@ -36,7 +36,7 @@ fn entity(listener: &Listener) -> String {
         type {} @key(fields: \"{}\") {{
           {}: ID!
         }}"},
-        &listener.entity_name, listener.id_field, listener.id_field
+        &listener.entity_name, listener.id_key, listener.id_key
     )
 }
 
@@ -59,7 +59,7 @@ fn subscriptions(listeners: &Listeners) -> String {
               "},
                 subscription_description(l),
                 l.operation,
-                l.id_field,
+                l.id_key,
                 l.entity_name
             )
         })

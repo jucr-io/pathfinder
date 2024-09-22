@@ -23,10 +23,10 @@ pub struct Listener {
     /// Description for the underlying GraphQL operation. When not set, it will be auto-generated.
     pub description: Option<String>,
     /// The field name to use as the identifier for the entity.
-    pub id_field: String,
+    pub id_key: String,
     /// The max TTL for the subscription. When this time is over, all open subscriptions will be
-    /// terminated. If not set, the subscriptions will be open indefinitely.
-    pub ttl_ms: Option<i64>,
+    /// terminated.
+    pub ttl_ms: i64,
     /// The topics to listen for changes on.
     pub topics: Vec<Topic>,
 }
@@ -46,9 +46,6 @@ impl Into<UniqueListenerMap> for Vec<Listener> {
 pub struct Topic {
     /// The name of the topic.
     pub name: String,
-    /// The maximum number of messages to buffer before notifying the router.
-    #[serde(default)]
-    pub cap: usize,
     /// Optional delay between receiving and notifying the router.
     pub delay_ms: Option<i64>,
     /// The source of the data to use for the topic.

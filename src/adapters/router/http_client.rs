@@ -20,7 +20,7 @@ impl HttpClient {
 
 #[async_trait]
 impl router::Client for HttpClient {
-    async fn send(&self, request: Request) -> anyhow::Result<Response> {
+    async fn send(&self, request: &Request) -> anyhow::Result<Response> {
         let result = self.inner.post(&request.callback_url).json(&request).send().await?;
         let status_code = result.status();
         let subscription_protocol = result
@@ -30,7 +30,15 @@ impl router::Client for HttpClient {
             .map(Into::into);
         let response: Option<EmptyResponse> = result.json().await.unwrap_or_default();
 
-        Ok(Response { status_code, subscription_protocol, errors: response.and_then(|r| r.errors) })
+        if status_code.is_success() {
+            return Ok(Response {
+                status_code,
+                subscription_protocol,
+                errors: response.and_then(|r| r.errors),
+            });
+        }
+
+        anyhow::bail!(response.unwrap_or_default());
     }
 
     fn clone_box(&self) -> Box<dyn router::Client> {

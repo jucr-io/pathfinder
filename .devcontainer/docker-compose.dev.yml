@@ -5,6 +5,29 @@ services:
   app:
     build:
       context: .
+    ports:
+      - 3001:3001
+    command: sleep infinity
+    depends_on:
+      - redis
+      - kafka-schema-registry
+      - kafka-broker
+    environment:
+      # Cargo
+      CARGO_NET_GIT_FETCH_WITH_CLI: true
+      # Tracing
+      LOG_LEVEL: "info"
+      LOG_FORMAT: "fmt"
+      TRACING_OTLP_ENDPOINT: "http://jaeger:4317"
+      # Basic Service
+      ROUTER_ENDPOINT_PORT: 3001
+      # Kafka
+      MESSAGE_CONSUMER_KAFKA_BROKERS: "kafka-broker:29092"
+      # Redis
+      KV_STORE_REDIS_HOST: "redis"
+      KV_STORE_REDIS_PORT: 7559
+      KV_STORE_REDIS_PASSWORD: "jucr12"
+      KV_STORE_REDIS_TLS_ENABLED: false
     volumes:
       - ..:/workspace:cached
       - type: bind
@@ -19,49 +42,6 @@ services:
         source: "./mosquitto/config/clients/example_user.key"
         target: /vault/secrets/mqtt-client-key.key
         read_only: true
-    ports:
-      - 3001:3001
-    command: sleep infinity
-    depends_on:
-      - redis
-      - dynamodb-local
-      - kafka-schema-registry
-      - kafka-broker
-    environment:
-      # Cargo
-      CARGO_NET_GIT_FETCH_WITH_CLI: true
-      # Service
-      SERVICE_NAME: "jcpp-gateway"
-      SERVICE_HOSTNAME: "0.0.0.0"
-      SERVICE_ENVIRONMENT: "local"
-      LOG_LEVEL: "info"
-      LOG_FORMAT: "fmt"
-      # MQTT
-      MQTT_HOST: "mqtt"
-      MQTT_PORT: "8883"
-      MQTT_TLS_ENABLED: "false"
-      MQTT_SECRET_MOUNT: "/vault/secrets"
-      MQTT_KEEP_ALIVE_SECS: "30"
-      MQTT_CAP: "512"
-      MQTT_GROUP_NAME: "jcpp-gateway"
-      # RESTful API
-      RESTFUL_API_PORT: "3001"
-      # AWS
-      AWS_ACCESS_KEY_ID: "jucr12"
-      AWS_SECRET_ACCESS_KEY: "jucr12"
-      AWS_REGION: "eu-central-1"
-      # DynamoDB
-      DYNAMODB_ENDPOINT: "http://dynamodb-local:8005"
-      # Kafka
-      KAFKA_BROKERS: "kafka-broker:29092"
-      # Confluent Schema Registry
-      CONFLUENT_SCHEMA_REGISTRY_HOST: "http://kafka-schema-registry:8081"
-      # Redis
-      REDIS_HOST: "redis"
-      REDIS_PORT: "7559"
-      REDIS_PASSWORD: "jucr12"
-      # OTLP
-      TRACING_OTLP_ENDPOINT: "http://jaeger:4317"
 
   mqtt:
     image: eclipse-mosquitto:2.0-openssl
@@ -77,30 +57,6 @@ services:
       - "16686:16686"
       - "4317:4317"
       - "4318:4318"
-
-  dynamodb-local:
-    image: amazon/dynamodb-local
-    restart: always
-    user: root
-    volumes:
-      - dynamodb-local-data:/data
-    ports:
-      - 8005:8005
-    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /data -port 8005"
-
-  dynamodb-admin:
-    image: aaronshaf/dynamodb-admin
-    restart: always
-    ports:
-      - 8007:8007
-    depends_on:
-      - dynamodb-local
-    environment:
-      PORT: "8007"
-      DYNAMO_ENDPOINT: "http://dynamodb-local:8005"
-      AWS_ACCESS_KEY_ID: "jucr12"
-      AWS_SECRET_ACCESS_KEY: "jucr12"
-      AWS_REGION: "eu-central-1"
 
   kafka-broker:
     image: confluentinc/cp-server:7.5.0
@@ -185,7 +141,6 @@ services:
       - 7559:7559
 
 volumes:
-  dynamodb-local-data:
   kafka-broker-data:
   mqtt-data:
 

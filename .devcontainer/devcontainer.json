@@ -13,8 +13,6 @@
     3001,
     7559,
     9021,
-    8005,
-    8007,
     8883,
     16686
   ],
@@ -36,12 +34,6 @@
     },
     "7559": {
       "label": "Redis"
-    },
-    "8005": {
-      "label": "DynamoDB Local"
-    },
-    "8007": {
-      "label": "DynamoDB Admin"
     },
     "8883": {
       "label": "MQTT (Mosquitto)"

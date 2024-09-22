@@ -18,7 +18,7 @@ impl From<&str> for SubscriptionProtocol {
 
 #[async_trait]
 pub trait Client: Send {
-    async fn send(&self, request: Request) -> anyhow::Result<Response>;
+    async fn send(&self, request: &Request) -> anyhow::Result<Response>;
 
     fn clone_box(&self) -> Box<dyn Client>;
 }
@@ -108,3 +108,10 @@ pub struct EmptyResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub errors: Option<Vec<ErrorDetails>>,
 }
+
+impl std::fmt::Display for EmptyResponse {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.errors)
+    }
+}
+impl std::error::Error for EmptyResponse {}

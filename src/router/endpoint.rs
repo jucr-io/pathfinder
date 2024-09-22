@@ -53,10 +53,13 @@ impl Actor for Endpoint {
 }
 
 impl Endpoint {
-    pub async fn spawn(config: &Config, listener: ActorRef<Listener>) -> ActorRef<Self> {
+    pub async fn spawn(
+        config: &Config,
+        subscription_listener: ActorRef<Listener>,
+    ) -> ActorRef<Self> {
         kameo::spawn(Self {
             config: config.clone(),
-            listener,
+            listener: subscription_listener,
             subscription_inject_peer: config
                 .get_string("router_endpoint.subscription.inject_peer")
                 .ok(),
@@ -90,8 +93,8 @@ impl Message<(MessageFromRouter, SocketAddr)> for Endpoint {
                         verifier: sub_ext.verifier,
                         heartbeat_interval_ms: sub_ext.heartbeat_interval_ms,
                         callback_url,
-                        operation_arguments: operation.arguments,
-                        operation_name: operation.name,
+                        arguments: operation.arguments,
+                        operation: operation.name,
                     })
                     .send()
                     .await?;

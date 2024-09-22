@@ -5,8 +5,10 @@ mod cli;
 mod commands;
 mod configuration;
 mod graphql;
-mod router;
+mod kv_store;
 mod listener;
+mod router;
+mod message_consumer;
 
 #[tokio::main]
 async fn main() -> ExitCode {
