@@ -4,6 +4,7 @@ federation_version: "2.7"
 health_endpoint:
   hostname: 0.0.0.0
   port: 8088
+  path: "/health"
 router_endpoint:
   hostname: 0.0.0.0
   # port: 8005

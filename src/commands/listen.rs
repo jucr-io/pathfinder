@@ -2,7 +2,7 @@ use config::Config;
 use futures_util::FutureExt;
 
 use crate::{
-    adapters, listener,
+    adapters, health, listener,
     ports::{
         kv_store::KvStoreFactory, message_consumer::MessageConsumerFactory,
         router_client::RouterClient,
@@ -40,8 +40,11 @@ pub async fn run(config: &Config) -> anyhow::Result<()> {
     )
     .await?;
 
+    let health_endpoint = health::HealthEndpoint::spawn(&config, listener.clone()).await;
+
     wait_for_terminate_signal().await?;
     listener.stop_gracefully().await?;
+    health_endpoint.stop_gracefully().await?;
 
     Ok(())
 }
