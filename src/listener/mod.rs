@@ -2,13 +2,13 @@ use std::collections::HashMap;
 
 use config::Config;
 use kameo::{
-    actor::ActorRef, mailbox::unbounded::UnboundedMailbox, message::Message, reply::ForwardedReply,
-    request::MessageSend, Actor,
+    actor::ActorRef, mailbox::unbounded::UnboundedMailbox, message::Message, request::MessageSend,
+    Actor,
 };
 use subscription::SubscriptionListener;
 
 use crate::{
-    configuration::{self, Listeners},
+    configuration::{self},
     kv_store, message_consumer,
     router::{self},
 };
@@ -22,6 +22,7 @@ pub use subscription::IncomingSubscription;
 pub use topic::TopicListener;
 
 pub struct Listener {
+    #[allow(dead_code)]
     config: Config,
     topic_listeners: HashMap<String, ActorRef<TopicListener>>,
     subscription_listeners: HashMap<String, ActorRef<SubscriptionListener>>,
@@ -77,7 +78,7 @@ impl Listener {
 
         let actor_ref = kameo::spawn(actor);
 
-        let router_endpoint = router::Endpoint::spawn(&config, actor_ref.clone()).await;
+        let _router_endpoint = router::Endpoint::spawn(&config, actor_ref.clone()).await;
 
         Ok(actor_ref)
     }

@@ -100,7 +100,7 @@ impl Message<(MessageFromRouter, SocketAddr)> for Endpoint {
                     .await?;
 
                 return Ok(serde_json::json!({
-                  "data": null
+                    "data": null
                 }));
             }
         }

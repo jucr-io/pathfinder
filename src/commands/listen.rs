@@ -1,6 +1,6 @@
 use config::Config;
 
-use crate::{adapters, listener, router};
+use crate::{adapters, listener};
 
 pub async fn run(config: &Config) -> anyhow::Result<()> {
     let kv_store_factory = adapters::kv_store::RedisKvStoreFactory::new(&config).await?;

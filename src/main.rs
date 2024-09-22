@@ -8,6 +8,7 @@ mod graphql;
 mod kv_store;
 mod listener;
 mod message_consumer;
+mod ports;
 mod router;
 mod serde;
 

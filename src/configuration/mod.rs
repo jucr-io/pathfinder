@@ -58,10 +58,10 @@ pub struct Topic {
     pub data_source: TopicDataSource,
     /// Mapping for incoming protobuf data.
     /// Only used when data_serde is set to protobuf/protobuf-sr.
-    pub protobuf_mapping: Option<Vec<ProtobufMapItem>>,
+    pub protobuf_mapping: Option<ProtobufMapping>,
     /// Mapping for incoming json data.
     /// Only used when data_serde is set to json.
-    pub json_mapping: Option<Vec<JsonMapItem>>,
+    pub json_mapping: Option<JsonMapping>,
     /// Whether the topic terminates subscriptions.
     /// If the manager receives a message on a topic that terminates subscriptions, it will
     /// terminate all subscriptions that are listening on this topic AFTER sending a final next
@@ -98,17 +98,19 @@ impl Default for ProtobufTag {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Default)]
-pub struct ProtobufMapItem {
-    pub key: String,
-    pub tag: u32,
-}
+pub type ProtobufMapping = HashMap<String, u32>;
+pub type JsonMapping = HashMap<String, String>;
+// #[derive(Clone, Debug, Serialize, Deserialize, Default)]
+// pub struct ProtobufMapItem {
+//     pub key: String,
+//     pub tag: u32,
+// }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Default)]
-pub struct JsonMapItem {
-    pub key: String,
-    pub tag: u32,
-}
+// #[derive(Clone, Debug, Serialize, Deserialize, Default)]
+// pub struct JsonMapItem {
+//     pub key: String,
+//     pub tag: u32,
+// }
 
 #[derive(Clone, Debug, Serialize, Deserialize, From, Into)]
 pub struct TopicCap(usize);

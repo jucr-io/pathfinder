@@ -1,19 +1,6 @@
-use std::collections::HashMap;
+use kameo::{actor::ActorRef, mailbox::bounded::BoundedMailbox, message::Message, Actor};
 
-use futures_util::FutureExt;
-use kameo::{
-    actor::ActorRef,
-    mailbox::{bounded::BoundedMailbox, unbounded::UnboundedMailbox},
-    message::{Message, StreamMessage},
-    request::MessageSend,
-    Actor,
-};
-
-use crate::{
-    configuration, kv_store,
-    message_consumer::{self, RawMessage},
-    router,
-};
+use crate::{configuration, kv_store, message_consumer::RawMessage, router};
 
 use super::subscription_store::SubscriptionStore;
 
@@ -65,6 +52,17 @@ impl Message<RawMessage> for MessageProcessor {
         message: RawMessage,
         _ctx: kameo::message::Context<'_, Self, Self::Reply>,
     ) -> Self::Reply {
+        // extract id field value from message:
+        // - get id_key from configuration
+        // - evaluate data source/serde from configuration
+        // - extract id field value from message
+        if message.topic
+            == "evses.charging_sessions.integration_events.charging_session_started".to_string()
+        {
+            tracing::info!("catched demo topic, waiting 30s");
+            tokio::time::sleep(std::time::Duration::from_secs(20)).await;
+            tracing::info!("catched demo topic, waiting done");
+        }
         tracing::info!("Processing message: {:?}", message);
     }
 }

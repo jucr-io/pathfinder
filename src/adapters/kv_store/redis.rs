@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 use config::Config;
-use redis::{AsyncCommands, Commands, ConnectionLike};
+use redis::{AsyncCommands, ConnectionLike};
 use serde::Deserialize;
 
 use crate::kv_store::{KvStore, KvStoreFactory};
@@ -62,7 +62,6 @@ pub struct RedisKvStoreFactory {
 impl RedisKvStoreFactory {
     pub async fn new(config: &Config) -> anyhow::Result<Self> {
         let configuration = config.get::<Configuration>("kv_store.redis")?;
-        tracing::info!("config {:?}", configuration);
         let addr = if configuration.tls_enabled {
             redis::ConnectionAddr::TcpTls {
                 host: configuration.host,

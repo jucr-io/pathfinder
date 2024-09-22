@@ -1,11 +1,7 @@
 use std::collections::HashMap;
 
-use futures_util::FutureExt;
 use kameo::{
-    actor::ActorRef,
-    mailbox::{bounded::BoundedMailbox, unbounded::UnboundedMailbox},
-    message::{Message, StreamMessage},
-    request::MessageSend,
+    actor::ActorRef, mailbox::bounded::BoundedMailbox, message::Message, request::MessageSend,
     Actor,
 };
 
@@ -15,7 +11,7 @@ use crate::{
     router,
 };
 
-use super::{message_processor::MessageProcessor, subscription_store::SubscriptionStore};
+use super::message_processor::MessageProcessor;
 
 const MAILBOX_CAP: usize = 512;
 

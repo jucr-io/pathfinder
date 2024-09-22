@@ -6,7 +6,7 @@ health_endpoint:
   port: 8088
 router_endpoint:
   hostname: 0.0.0.0
-  port: 8005
+  # port: 8005
   path: "/graphql"
   subscription:
     inject_peer: "router.router"
@@ -42,11 +42,9 @@ listeners:
         data_serde: "protobuf_sr" # allowed: protobuf, protobuf_sr, json -- default=protobuf_sr
         data_source: "key" # allowed: key, value -- default=key
         protobuf_mapping: # only for protobuf, protobuf_sr -- default=id/1
-          - key: "id"
-            tag: 1
+          id: 1
         json_mapping: # only for json -- default=id
-          - key: "id"
-            property: "accountId" # optional -- default key=property
+          id: "accountId" # optional -- default key=property
         # rate_limit
       - name: "evses.charging_sessions.integration_events.charging_session_updated"
       - name: "evses.charging_sessions.integration_events.charging_session_terminated"
@@ -60,5 +58,4 @@ listeners:
       - name: "evses.evses.integration_events.evse_telemetry_updated"
         data_source: "value"
         protobuf_mapping:
-          - key: "evseIdDemo"
-            tag: 2
+          evseIdDemo: 2
