@@ -16,10 +16,12 @@ struct Cli {
     config_path: Option<String>,
 }
 
-#[derive(Debug, Parser, Default)]
+#[derive(Debug, Parser)]
 enum Command {
-    #[default]
-    Listen,
+    Listen {
+        #[clap(short, long, env, default_value = "false")]
+        publish_schema: bool,
+    },
     ExportSchema(ExportSchemaArgs),
     PublishSchema,
 }
@@ -35,7 +37,12 @@ pub async fn run() -> anyhow::Result<()> {
     let config = configuration::build(cli.config_path).await.unwrap();
 
     match cli.command {
-        Command::Listen => listen::run(&config).await,
+        Command::Listen { publish_schema } => {
+            if publish_schema {
+                publish_schema::run(&config).await?;
+            }
+            listen::run(&config).await
+        }
         Command::ExportSchema(args) => export_schema::run(&config, args.path).await,
         Command::PublishSchema => publish_schema::run(&config).await,
     }
