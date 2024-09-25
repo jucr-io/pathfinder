@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use kameo::{actor::ActorRef, mailbox::bounded::BoundedMailbox, message::Message, Actor};
+use kameo::{
+    actor::ActorRef, mailbox::bounded::BoundedMailbox, message::Message, request::MessageSend,
+    Actor,
+};
 
 use crate::{
     configuration,
@@ -17,7 +20,7 @@ const MAILBOX_CAP: usize = 256;
 pub(crate) struct SubscriptionListener {
     router_client: Box<dyn RouterClient>,
     subscription_store: SubscriptionStore,
-    configuration: configuration::Listener,
+    listener_configuration: configuration::Listener,
 }
 
 impl Actor for SubscriptionListener {
@@ -30,10 +33,22 @@ impl Actor for SubscriptionListener {
     async fn on_start(&mut self, actor_ref: ActorRef<Self>) -> Result<(), kameo::error::BoxError> {
         tracing::info! {
             event = "subscription_listener_started",
-            operation = self.configuration.operation,
+            operation = self.listener_configuration.operation,
             actor = ?actor_ref
         };
         Ok(())
+    }
+
+    async fn on_panic(
+        &mut self,
+        _actor_ref: kameo::actor::WeakActorRef<Self>,
+        error: kameo::error::PanicError,
+    ) -> Result<Option<kameo::error::ActorStopReason>, kameo::error::BoxError> {
+        tracing::error! {
+            event = "actor_failed",
+            error = error.to_string(),
+        };
+        Ok(None)
     }
 }
 
@@ -41,10 +56,11 @@ impl SubscriptionListener {
     pub(crate) async fn spawn(
         router_client: Box<dyn RouterClient>,
         kv_store_factory: Box<dyn KvStoreFactory>,
-        configuration: configuration::Listener,
+        listener_configuration: configuration::Listener,
     ) -> anyhow::Result<ActorRef<Self>> {
         let subscription_store = SubscriptionStore::new(kv_store_factory.clone()).await?;
-        let actor_ref = kameo::spawn(Self { router_client, subscription_store, configuration });
+        let actor_ref =
+            kameo::spawn(Self { router_client, subscription_store, listener_configuration });
 
         Ok(actor_ref)
     }
@@ -60,17 +76,20 @@ impl Message<IncomingSubscription> for SubscriptionListener {
     async fn handle(
         &mut self,
         subscription: IncomingSubscription,
-        _ctx: kameo::message::Context<'_, Self, Self::Reply>,
+        ctx: kameo::message::Context<'_, Self, Self::Reply>,
     ) -> Self::Reply {
         tracing::debug! { event = "subscription_received", ?subscription };
 
         let ins = subscription.clone();
-        let operation_id_value = if let Some(value) = ins.arguments.get(&self.configuration.id_key)
-        {
-            value.to_string()
-        } else {
-            anyhow::bail!("invalid identifier supplied - expected {}", &self.configuration.id_key);
-        };
+        let operation_id_value =
+            if let Some(value) = ins.arguments.get(&self.listener_configuration.id_key) {
+                value.to_string()
+            } else {
+                anyhow::bail!(
+                    "invalid identifier supplied - expected {}",
+                    &self.listener_configuration.id_key
+                );
+            };
         let record = SubscriptionRecord {
             id: ins.id,
             operation: ins.operation,
@@ -80,7 +99,7 @@ impl Message<IncomingSubscription> for SubscriptionListener {
             heartbeat_interval_ms: ins.heartbeat_interval_ms,
             callback_url: ins.callback_url,
         };
-        self.subscription_store.insert(&record, self.configuration.ttl_ms).await?;
+        self.subscription_store.insert(&record, self.listener_configuration.ttl_ms).await?;
 
         let check_request = router_client::Request::subscription(
             &subscription.callback_url,
@@ -111,6 +130,11 @@ impl Message<IncomingSubscription> for SubscriptionListener {
                 error
             })?;
 
+        if self.listener_configuration.publish_initial_update {
+            let dispatch = DispatchInitialUpdate { subscription: record };
+            let _ = ctx.actor_ref().tell(dispatch).send().await?;
+        }
+
         Ok(())
     }
 }
@@ -127,18 +151,37 @@ pub struct IncomingSubscription {
     pub arguments: OperationArguments,
 }
 
-// impl Into<SubscriptionRecord> for IncomingSubscription {
-//     fn into(self) -> SubscriptionRecord {
-//         SubscriptionRecord {
-//             id: self.id,
-//             operation: self.operation,
-//             created_at: std::time::SystemTime::now()
-//                 .duration_since(std::time::UNIX_EPOCH)
-//                 .unwrap_or_default()
-//                 .as_secs(),
-//             verifier: self.verifier,
-//             heartbeat_interval_ms: self.heartbeat_interval_ms,
-//             callback_url: self.callback_url,
-//         }
-//     }
-// }
+#[derive(Debug, Clone)]
+struct DispatchInitialUpdate {
+    subscription: SubscriptionRecord,
+}
+
+impl Message<DispatchInitialUpdate> for SubscriptionListener {
+    type Reply = anyhow::Result<()>;
+
+    async fn handle(
+        &mut self,
+        message: DispatchInitialUpdate,
+        _ctx: kameo::message::Context<'_, Self, Self::Reply>,
+    ) -> Self::Reply {
+        let data = HashMap::from_iter(vec![(
+            self.listener_configuration.id_key.clone(),
+            serde_json::json!(message.subscription.operation_id_value),
+        )]);
+
+        let next_request = router_client::Request::subscription(
+            &message.subscription.callback_url,
+            &message.subscription.id,
+            &message.subscription.verifier,
+        )
+        .next(
+            &self.listener_configuration.operation,
+            &self.listener_configuration.entity_name,
+            data,
+        )
+        .to_owned();
+        let _ = self.router_client.send(&next_request).await?;
+
+        Ok(())
+    }
+}

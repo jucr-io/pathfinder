@@ -29,6 +29,11 @@ pub struct Listener {
     /// The max TTL for the subscription. When this time is over, all open subscriptions will be
     /// terminated.
     pub ttl_ms: u64,
+    /// If enabled, publishes an initial update to the router when a new subscription is created.
+    /// Important: this only includes an object with the id_key set to the id of the entity. The
+    /// rest needs to be resolved by the router.
+    #[serde(default)]
+    pub publish_initial_update: bool,
     /// The topics to listen for changes on.
     pub topics: Vec<Topic>,
 }
