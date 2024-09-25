@@ -4,6 +4,7 @@ use serde::Serialize;
 use crate::{
     commands::{export_schema, listen, publish_schema},
     configuration::{self},
+    tracing_guard::TracingGuard,
 };
 
 #[derive(Parser, Debug)]
@@ -34,7 +35,8 @@ struct ExportSchemaArgs {
 
 pub async fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
-    let config = configuration::build(cli.config_path).await.unwrap();
+    let config = configuration::build(cli.config_path).await?;
+    let _tracing = TracingGuard::init(&config)?;
 
     match cli.command {
         Command::Listen { publish_schema } => {

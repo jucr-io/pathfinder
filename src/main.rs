@@ -5,17 +5,17 @@ mod cli;
 mod commands;
 mod configuration;
 mod graphql;
+mod health;
 mod listener;
 mod ports;
-mod health;
+mod tracing_guard;
 
 #[tokio::main]
 async fn main() -> ExitCode {
-    let _tracing = lightning_rs_tracing_setup::from_env().unwrap();
     match cli::run().await {
         Ok(_) => ExitCode::SUCCESS,
         Err(e) => {
-            tracing::error!("{e:?}");
+            eprintln!("{e:?}");
             ExitCode::FAILURE
         }
     }

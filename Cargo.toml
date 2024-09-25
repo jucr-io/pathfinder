@@ -7,8 +7,6 @@ authors = ["JUCR GmbH <engineering@jucr.com>"]
 [features]
 default = []
 create-kafka-topics = []
-tracing-otlp-http = ["lightning-rs-tracing-setup/otlp-http"]
-tracing-otlp-grpc = ["lightning-rs-tracing-setup/otlp-grpc"]
 
 [dev-dependencies]
 tokio = { version = "1.39.2", features = ["full", "test-util"] }
@@ -22,15 +20,18 @@ tokio = { version = "1.39.2", features = ["full"] }
 tokio-util = { version = "0.7.11", features = ["rt"] }
 tokio-macros = "2.4.0"
 tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.18" }
+tracing-subscriber = { version = "0.3.18", features = [
+  "std",
+  "fmt",
+  "json",
+  "env-filter",
+] }
 prost = "0.13"
 bytes = "1.7.1"
 uuid = { version = "1.10.0", features = ["v4"] }
 serde = { version = "1.0.206", features = ["derive", "serde_derive"] }
 serde_json = "1.0.122"
 axum = "0.7.5"
-lightning-rs-topic-macro = { git = "ssh://git@github.com/jucr-io/lightning-rs.git", rev = "d12848a" }
-lightning-rs-tracing-setup = { git = "ssh://git@github.com/jucr-io/lightning-rs.git", rev = "d12848a", default-features = false }
 clap = { version = "4.5.17", features = ["derive", "env"] }
 config = { version = "0.14.0", default-features = false, features = [
   "yaml",

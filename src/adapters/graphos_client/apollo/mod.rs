@@ -21,20 +21,23 @@ impl ApolloGraphOsClient {
     pub fn new(config: &Config) -> anyhow::Result<Self> {
         let configuration: Configuration = config.get("graphos_client.apollo")?;
         let service_name = config.get_string("service_name")?;
-        let git_hash = config.get_string("git_hash").unwrap_or_default();
-        let pkg_version = config.get_string("cargo_pkg_version").unwrap_or_default();
+        let pkg_version = option_env!("CARGO_PKG_VERSION").unwrap_or("0.0.0");
+        let git_hash = option_env!("GIT_HASH").unwrap_or("unknown");
 
         let mut headers = header::HeaderMap::new();
         headers.insert("apollographql-client-name", header::HeaderValue::from_str(&service_name)?);
-        headers.insert(
-            "apollographql-client-version",
-            header::HeaderValue::from_str(&config.get_string("cargo_pkg_version")?)?,
-        );
+        headers.insert("apollographql-client-version", header::HeaderValue::from_str("0.0.0")?);
         headers.insert("x-api-key", header::HeaderValue::from_str(&configuration.key)?);
 
         let client = Client::builder().default_headers(headers).build()?;
 
-        Ok(ApolloGraphOsClient { client, configuration, service_name, git_hash, pkg_version })
+        Ok(ApolloGraphOsClient {
+            client,
+            configuration,
+            service_name,
+            git_hash: git_hash.to_string(),
+            pkg_version: pkg_version.to_string(),
+        })
     }
 }
 

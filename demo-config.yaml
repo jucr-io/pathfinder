@@ -1,6 +1,9 @@
 service_name: "max-test-subscription-handler"
 link_version: "1.0"
 federation_version: "2.7"
+tracing:
+  log_level: "info"
+  log_format: "fmt"
 health_endpoint:
   hostname: 0.0.0.0
   port: 8088
@@ -18,7 +21,7 @@ router_client:
 message_consumer:
   adapter: "kafka"
   kafka:
-    # brokers: "localhost:9092"
+    brokers: "localhost:9092"
     security_protocol: "plaintext"
     sasl_mechanism: "plain"
     # sasl_username: "abc"
@@ -26,15 +29,15 @@ message_consumer:
     session_timeout_ms: 10000
     heartbeat_interval_ms: 500
 kv_store:
-  adapter: "redis"
-  redis:
-    enabled: true
-    # host: "127.0.0.1"
-    # port: 6379
-    # tls_enabled: false
-    # db: 0
-    # username: "jucr"
-    # password: "jucr"
+  adapter: "in_memory"
+  # redis:
+  #   enabled: false
+  #   host: "127.0.0.1"
+  #   port: 6379
+  #   tls_enabled: false
+  #   db: 0
+  #   username: "jucr"
+  #   password: "jucr"
 graphos_client:
   adapter: "apollo"
   apollo:

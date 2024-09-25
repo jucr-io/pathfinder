@@ -86,10 +86,8 @@ impl Request {
         self.set_action("next");
         data.insert(graphql::TYPENAME_KEY.to_string(), serde_json::json!(entity_name));
         let payload = serde_json::json!({
-            "payload": {
-                "data": {
-                    operation: data
-                }
+            "data": {
+                operation: data
             }
         });
         self.set_value("payload", payload);

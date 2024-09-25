@@ -71,7 +71,7 @@ impl KafkaMessageConsumerFactory {
             .set("client.id", config.get_string("service_name")?)
             .set("bootstrap.servers", configuration.brokers)
             .set("security.protocol", configuration.security_protocol)
-            .set("sasl.mechanism", configuration.sasl_mechanism)
+            .set("sasl.mechanism", configuration.sasl_mechanism.to_uppercase())
             .set("socket.keepalive.enable", "true")
             .set("session.timeout.ms", configuration.session_timeout_ms.to_string())
             .set("group.id", config.get_string("service_name")?)
