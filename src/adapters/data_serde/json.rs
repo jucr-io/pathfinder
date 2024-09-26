@@ -75,7 +75,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_extract_values_without_mapping_strict() {
-        assert!(JsonDataSerde::new(JsonMapping::default(), false).is_err());
+        assert!(JsonDataSerde::new(JsonMapping::default(), true).is_err());
     }
 
     #[tokio::test]
