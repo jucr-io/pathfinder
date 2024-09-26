@@ -16,9 +16,9 @@ services:
       # Cargo
       CARGO_NET_GIT_FETCH_WITH_CLI: true
       # Tracing
-      LOG_LEVEL: "info"
-      LOG_FORMAT: "fmt"
-      TRACING_OTLP_ENDPOINT: "http://jaeger:4317"
+      TRACING__LOG_LEVEL: "info"
+      TRACING__LOG_FORMAT: "fmt"
+      TRACING__OTLP_ENDPOINT: "http://jaeger:4317"
       # Basic Service
       ROUTER_ENDPOINT__PORT: 3001
       # Kafka
@@ -30,26 +30,6 @@ services:
       KV_STORE__REDIS__TLS_ENABLED: false
     volumes:
       - ..:/workspace:cached
-      - type: bind
-        source: "./mosquitto/config/certs/ca.crt"
-        target: /vault/secrets/mqtt-ca.crt
-        read_only: true
-      - type: bind
-        source: "./mosquitto/config/clients/example_user.crt"
-        target: /vault/secrets/mqtt-client-certificate.crt
-        read_only: true
-      - type: bind
-        source: "./mosquitto/config/clients/example_user.key"
-        target: /vault/secrets/mqtt-client-key.key
-        read_only: true
-
-  mqtt:
-    image: eclipse-mosquitto:2.0-openssl
-    volumes:
-      - ./mosquitto/config:/mosquitto/config
-      - mqtt-data:/mosquitto/data
-    ports:
-      - "8883:8883"
 
   jaeger:
     image: jaegertracing/all-in-one:latest
@@ -142,7 +122,6 @@ services:
 
 volumes:
   kafka-broker-data:
-  mqtt-data:
 
 networks:
   default:
