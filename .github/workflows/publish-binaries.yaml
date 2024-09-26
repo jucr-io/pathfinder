@@ -40,10 +40,6 @@ jobs:
       - name: init cache
         uses: Swatinem/rust-cache@v2
 
-      - name: install libssl-dev
-        run: sudo apt-get install --yes libssl-dev
-        if: contains(matrix.platform.name, 'linux')
-
       - name: setup toolchain
         run: rustup toolchain install stable --profile minimal
 

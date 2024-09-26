@@ -12,32 +12,9 @@ jobs:
   fmt:
     uses: jucr-io/github-reusable-workflows/.github/workflows/rust-fmt-v1.yaml@main
     secrets: inherit
-    strategy:
-      fail-fast: false
-      matrix:
-        profile: ["release"]
-        toolchain: ["stable"]
-        targets:
-          - name: "."
-            target: "x86_64-unknown-linux-gnu"
-          - name: "."
-            target: "aarch64-unknown-linux-gnu"
-          - name: "."
-            target: "aarch64-apple-darwin"
-        rust_log: ["debug"]
-        rust_backtrace: ["full"]
-        rustflags: ["-D warnings"]
-        debug: ["true"]
     with:
       profile: ${{ matrix.profile }}
       toolchain: ${{ matrix.toolchain }}
-      target: ${{ matrix.targets.target }}
-      # features: ${{ matrix.targets.features }}
-      name: ${{ matrix.targets.name }}
-      rust_log: ${{ matrix.rust_log }}
-      rust_backtrace: ${{ matrix.rust_backtrace }}
-      rustflags: ${{ matrix.rustflags }}
-      debug: ${{ matrix.debug }}
   clippy:
     uses: jucr-io/github-reusable-workflows/.github/workflows/rust-clippy-v1.yaml@main
     secrets: inherit
