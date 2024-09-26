@@ -1,0 +1,15 @@
+{
+  "rust-analyzer.diagnostics.disabled": [
+    "trait-impl-incorrect-safety"
+  ],
+  "rust-analyzer.references.excludeTests": true,
+  "rust-analyzer.cargo.allTargets": true,
+  "rust-analyzer.cargo.features": [],
+  "rust-analyzer.cargo.noDefaultFeatures": false,
+  "rust-analyzer.rustfmt.extraArgs": [
+    "+nightly"
+  ],
+  "[rust]": {
+    "editor.tabSize": 4
+  }
+}

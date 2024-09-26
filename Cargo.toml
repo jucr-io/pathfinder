@@ -1,0 +1,57 @@
+[package]
+name = "pathfinder"
+version = "0.0.0"
+edition = "2021"
+authors = ["JUCR GmbH <engineering@jucr.com>"]
+
+[features]
+default = []
+create-kafka-topics = []
+
+[dev-dependencies]
+tokio = { version = "1.39.2", features = ["full", "test-util"] }
+rand = { version = "0.8.5" }
+
+[dependencies]
+anyhow = "1.0.86"
+futures-util = "0.3.30"
+rdkafka = { version = "0.36.2", features = ["ssl-vendored"] }
+tokio = { version = "1.39.2", features = ["full"] }
+tokio-util = { version = "0.7.11", features = ["rt"] }
+tokio-macros = "2.4.0"
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = [
+  "std",
+  "fmt",
+  "json",
+  "env-filter",
+] }
+prost = "0.13"
+bytes = "1.7.1"
+uuid = { version = "1.10.0", features = ["v4"] }
+serde = { version = "1.0.206", features = ["derive", "serde_derive"] }
+serde_json = "1.0.122"
+axum = "0.7.5"
+clap = { version = "4.5.17", features = ["derive", "env"] }
+config = { version = "0.14.0", default-features = false, features = [
+  "yaml",
+  "async",
+] }
+indoc = "2.0.5"
+derive_more = { version = "1.0.0", features = ["full"] }
+kameo = "0.10.0"
+apollo-parser = "0.8.2"
+async-trait = "0.1.82"
+graphql_client = { version = "0.14.0", features = [
+  "reqwest-rustls",
+  "graphql_query_derive",
+], default-features = false }
+reqwest = { version = "0.11", features = ["rustls-tls", "json"] }
+graphql-query = "1.0.0"
+redis = { version = "0.27.2", default-features = false, features = [
+  "aio",
+  "ahash",
+  "tokio-comp",
+  "connection-manager",
+  "tokio-rustls-comp",
+] }

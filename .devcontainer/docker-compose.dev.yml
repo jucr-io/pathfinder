@@ -1,0 +1,129 @@
+version: "3.8"
+
+services:
+
+  app:
+    build:
+      context: .
+    ports:
+      - 3001:3001
+    command: sleep infinity
+    depends_on:
+      - redis
+      - kafka-schema-registry
+      - kafka-broker
+    environment:
+      # Cargo
+      CARGO_NET_GIT_FETCH_WITH_CLI: true
+      # Tracing
+      TRACING__LOG_LEVEL: "info"
+      TRACING__LOG_FORMAT: "fmt"
+      TRACING__OTLP_ENDPOINT: "http://jaeger:4317"
+      # Basic Service
+      ROUTER_ENDPOINT__PORT: 3001
+      # Kafka
+      MESSAGE_CONSUMER__KAFKA__BROKERS: "kafka-broker:29092"
+      # Redis
+      KV_STORE__REDIS__HOST: "redis"
+      KV_STORE__REDIS__PORT: 7559
+      KV_STORE__REDIS__PASSWORD: "jucr12"
+      KV_STORE__REDIS__TLS_ENABLED: false
+    volumes:
+      - ..:/workspace:cached
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+
+  kafka-broker:
+    image: confluentinc/cp-server:7.5.0
+    hostname: kafka-broker
+    container_name: kafka-broker
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    healthcheck:
+      # test: nc -z localhost 9092 || exit -1
+      test: "kafka-topics.sh --bootstrap-server 127.0.0.1:9092 --topic hc --create --if-not-exists && kafka-topics.sh --bootstrap-server 127.0.0.1:9092 --topic hc --describe"
+      start_period: 15s
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka-broker:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka-broker:9092
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka-broker:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka-broker:29092,CONTROLLER://kafka-broker:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    volumes:
+      - kafka-broker-data:/data
+
+  kafka-schema-registry:
+    image: confluentinc/cp-schema-registry:7.5.0
+    hostname: kafka-schema-registry
+    container_name: kafka-schema-registry
+    depends_on:
+      - kafka-broker
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: kafka-schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka-broker:29092'
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+
+  kafka-control-center:
+    image: confluentinc/cp-enterprise-control-center:7.5.0
+    hostname: kafka-control-center
+    container_name: kafka-control-center
+    depends_on:
+      - kafka-broker
+      - kafka-schema-registry
+    ports:
+      - "9021:9021"
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'kafka-broker:29092'
+      CONTROL_CENTER_SCHEMA_REGISTRY_URL: "http://kafka-schema-registry:8081"
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+      PORT: 9021
+
+  redis:
+    image: bitnami/redis:latest
+    environment:
+      REDIS_PASSWORD: "jucr12"
+      REDIS_PORT_NUMBER: "7559"
+    ports:
+      - 7559:7559
+
+volumes:
+  kafka-broker-data:
+
+networks:
+  default:
+    name: main
+    external: true

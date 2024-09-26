@@ -1,0 +1,17 @@
+[target.x86_64-unknown-linux-gnu]
+pre-build = [
+  "dpkg --add-architecture $CROSS_DEB_ARCH",
+  "apt-get update && apt-get install --assume-yes pkg-config:$CROSS_DEB_ARCH ca-certificates libssl-dev:$CROSS_DEB_ARCH",
+]
+
+# [target.aarch64-unknown-linux-gnu]
+# image = "ghcr.io/cross-rs/aarch64-unknown-linux-gnu:edge"
+# pre-build = [
+#   "dpkg --add-architecture arm64",
+#   "apt-get update && apt-get install --assume-yes pkg-config:arm64 ca-certificates libssl-dev:arm64",
+# ]
+
+# Example Dockerfile for aarch64-unknown-linux-gnu
+# FROM ghcr.io/cross-rs/aarch64-unknown-linux-gnu:edge
+# RUN dpkg --add-architecture arm64
+# RUN apt-get update && apt-get install --assume-yes libssl-dev:arm64

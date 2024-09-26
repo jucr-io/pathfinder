@@ -1,0 +1,17 @@
+mutation PublishSubgraphMutation($graphVariant: String!, $name: String!, $revision: String!, $activePartialSchema: PartialSchemaInput!, $graphId: ID!, $gitContext: GitContextInput, $url: String, $downstreamLaunchInitiation: DownstreamLaunchInitiation) {
+  graph(id: $graphId) {
+    publishSubgraph(graphVariant: $graphVariant, name: $name, revision: $revision, activePartialSchema: $activePartialSchema, gitContext: $gitContext, url: $url, downstreamLaunchInitiation: $downstreamLaunchInitiation) {
+      wasUpdated
+      wasCreated
+      errors {
+        code
+        message
+      }
+      launchUrl
+      launch {
+        id
+        status
+      }
+    }
+  }
+}

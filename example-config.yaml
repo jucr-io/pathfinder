@@ -1,0 +1,79 @@
+service_name: "your-subgraph-name"
+link_version: "1.0"
+federation_version: "2.7"
+
+tracing:
+  log_level: "debug"
+  log_format: "fmt"
+
+health_endpoint:
+  hostname: 0.0.0.0
+  port: 8088
+  path: "/health"
+
+router_endpoint:
+  hostname: 0.0.0.0
+  port: 8005
+  path: "/graphql"
+  subscription:
+    inject_peer: "router.router"
+
+router_client:
+  adapter: "http"
+  http:
+    timeout_ms: 1000
+
+message_consumer:
+  adapter: "kafka"
+  kafka:
+    brokers: "localhost:9092"
+    security_protocol: "plaintext"
+    sasl_mechanism: "plain"
+    sasl_username: "abc"
+    sasl_password: "abc"
+    session_timeout_ms: 10000
+    heartbeat_interval_ms: 500
+
+kv_store:
+  adapter: "redis"
+  redis:
+    host: "127.0.0.1"
+    port: 6379
+    tls_enabled: true
+    db: 0
+    username: "abc"
+    password: "abc"
+
+graphos_client:
+  adapter: "apollo"
+  apollo:
+    advertised_subgraph_url: "http://max-test.max-test:3001/graphql"
+    endpoint: "https://api.apollographql.com/api/graphql"
+    graph_variant: "current"
+    key: "abc"
+    graph_ref: "abc"
+
+listeners:
+  - operation: "chargingSessionChanged"
+    entity_name: "ChargingSession"
+    description: "Notify when a charging session has changed, here with custom description."
+    id_key: "id"
+    ttl_ms: 600000 # max time a subscription can run until terminated by the manager
+    publish_initial_update: true # default=false
+    topics:
+      - name: "evses.charging_sessions.integration_events.charging_session_started"
+        delay_ms: 5000 # optional delay between receiving and notifying the router
+        data_serde: "json" # allowed: protobuf, protobuf_wire, json -- default=json
+        data_source: "value" # allowed: key, value -- default=key
+        strict_mapping: false # only for json -- default=false
+        protobuf_mapping: # only for protobuf, protobuf_wire -- default=id/1
+          id: 1
+        json_mapping: # only for json
+          id: "accountId" # optional -- default key=property
+        # rate_limit
+      - name: "evses.charging_sessions.integration_events.charging_session_updated"
+      - name: "evses.charging_sessions.integration_events.charging_session_terminated"
+      - name: "evses.charging_sessions.integration_events.charging_session_finished"
+        json_mapping:
+          id: "accountId"
+        terminates_subscriptions: true # default=false
