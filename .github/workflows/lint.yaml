@@ -30,17 +30,13 @@ jobs:
             target: "aarch64-unknown-linux-gnu"
           - name: "."
             target: "aarch64-apple-darwin"
-        rust_log: ["debug"]
-        rust_backtrace: ["full"]
-        rustflags: ["-D warnings"]
-        debug: ["true"]
     with:
       profile: ${{ matrix.profile }}
       toolchain: ${{ matrix.toolchain }}
       target: ${{ matrix.targets.target }}
       # features: ${{ matrix.targets.features }}
       name: ${{ matrix.targets.name }}
-      rust_log: ${{ matrix.rust_log }}
-      rust_backtrace: ${{ matrix.rust_backtrace }}
-      rustflags: ${{ matrix.rustflags }}
-      debug: ${{ matrix.debug }}
+      rust_log: "debug"
+      rust_backtrace: "full"
+      rustflags: "-D warnings"
+      debug: "false"
