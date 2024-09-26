@@ -13,8 +13,8 @@ jobs:
     uses: jucr-io/github-reusable-workflows/.github/workflows/rust-fmt-v1.yaml@main
     secrets: inherit
     with:
-      profile: ${{ matrix.profile }}
-      toolchain: ${{ matrix.toolchain }}
+      profile: "release"
+      toolchain: "nightly"
   clippy:
     uses: jucr-io/github-reusable-workflows/.github/workflows/rust-clippy-v1.yaml@main
     secrets: inherit
