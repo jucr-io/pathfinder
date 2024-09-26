@@ -1,0 +1,78 @@
+name: publish-binaries
+
+on:
+  release:
+    types: [released, prereleased]
+
+permissions: write-all
+
+jobs:
+  build:
+    name: ${{ matrix.platform.target }}
+    runs-on: ${{ matrix.platform.os }}
+    if: ${{ !startsWith(github.ref_name, 'v') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os_name: Linux-x86_64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            bin: pathfinder
+            name: pathfinder-linux-x86_64-gnu.tar.gz
+
+          - os_name: Linux-aarch64-gnu
+            os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            bin: pathfinder
+            name: pathfinder-linux-aarch64-gnu.tar.gz
+
+          - os_name: macOS-aarch64
+            os: macOS-latest
+            target: aarch64-apple-darwin
+            bin: pathfinder
+            name: pathfinder-apple-darwin-aarch64.tar.gz
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: init cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: install libssl-dev
+        run: sudo apt-get install --yes libssl-dev
+        if: contains(matrix.platform.name, 'linux')
+
+      - name: setup toolchain
+        run: rustup toolchain install stable --profile minimal
+
+      - name: set version
+        run: cargo install cargo-edit && cargo set-version $VERSION
+        env:
+          VERSION: ${{ github.ref_name }}
+
+      - name: run build
+        uses: houseabsolute/actions-rust-cross@v0
+        with:
+          command: "build"
+          target: ${{ matrix.platform.target }}
+          toolchain: "stable"
+          args: "--locked --release"
+          strip: true
+
+      - name: package
+        shell: bash
+        run: |
+          cd target/${{ matrix.platform.target }}/release
+          if [[ "${{ matrix.platform.os }}" == "windows-latest" ]]; then
+            7z a ../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
+          else
+            tar czvf ../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
+          fi
+          cd -
+
+      - name: upload artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "pathfinder-*"
