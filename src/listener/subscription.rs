@@ -90,7 +90,7 @@ impl Message<IncomingSubscription> for SubscriptionListener {
                     &self.listener_configuration.id_key
                 );
             };
-        let record = SubscriptionRecord {
+        let subscription = SubscriptionRecord {
             id: ins.id,
             operation: ins.operation,
             operation_id_value,
@@ -99,7 +99,7 @@ impl Message<IncomingSubscription> for SubscriptionListener {
             heartbeat_interval_ms: ins.heartbeat_interval_ms,
             callback_url: ins.callback_url,
         };
-        self.subscription_store.insert(&record, self.listener_configuration.ttl_ms).await?;
+        self.subscription_store.insert(&subscription, self.listener_configuration.ttl_ms).await?;
 
         let check_request = router_client::Request::subscription(
             &subscription.callback_url,
@@ -131,7 +131,7 @@ impl Message<IncomingSubscription> for SubscriptionListener {
             })?;
 
         if self.listener_configuration.publish_initial_update {
-            let dispatch = DispatchInitialUpdate { subscription: record };
+            let dispatch = DispatchInitialUpdate { subscription };
             let _ = ctx.actor_ref().tell(dispatch).send().await?;
         }
 
