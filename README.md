@@ -58,7 +58,24 @@ Depending on the configuration, it internally spins up a variety of handlers to 
 
 # Usage
 
-tbd
+> [!TIP]  
+> We are right now building a Helm chart to make it possible to deploy natively with e.g. ArgoCD.
+
+```txt
+Usage: pathfinder [OPTIONS] <COMMAND>
+
+Commands:
+  listen          
+  export-schema   
+  publish-schema  
+  help            Print this message or the help of the given subcommand(s)
+
+Options:
+  -c, --config-path <CONFIG_PATH>  [env: CONFIG_PATH=]
+  -h, --help                       Print help
+  -V, --version                    Print version
+```
+
 
 # Configuration
 
