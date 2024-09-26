@@ -257,7 +257,7 @@ sequenceDiagram
 
 ### Initialization Phase
 
-![Initialization Phase](docs/architecture-pathfinder-init.png)
+![Initialization Phase](docs/architecture-pathfinder-init-phase.png)
 
 ### Main Loop
 
