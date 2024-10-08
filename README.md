@@ -10,7 +10,7 @@ Kubernetes-native relay between an async message broker like Apache Kafka and th
 [Usage](#usage) •
 [Configuration](#configuration) •
 [Architecture](#architecture) •
-[Integrations](#integrations) •
+[Integrations](#integrations)
 
 </div>
 
