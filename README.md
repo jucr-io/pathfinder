@@ -6,28 +6,29 @@
 
 Kubernetes-native relay between an async message broker like Apache Kafka and the [Apollo Router](https://github.com/apollographql/router). It includes adapters for Kafka, Redis, Apollo and also multiple SerDes like JSON, Protobuf or even Protobuf with the wire format.
 
-[Intro](#-intro) •
-[Usage](#-usage) •
-[Configuration](#-configuration) •
-[Architecture](#-architecture) •
-[Development](#-development) •
-[@jucr-io/backend](https://github.com/orgs/jucr-io/teams/backend)
+[Intro](#intro) •
+[Usage](#usage) •
+[Configuration](#configuration) •
+[Architecture](#architecture) •
+[Integrations](#pathfinder-integrations) •
 
 </div>
 
 # Intro
 
 When implementing GraphQL subscriptions for a federated Graph, there are some interesting challenges to tackle:
+
 1. Managing possible subscriptions on each Subgraph
 2. Ingesting the updates - subscribers need to be notified whenever something has changed
 3. Keeping a huge set of persistent connections open at the same time
 
 To accomplish those challenges, Pathfinder was invented. It spins up a layer between an asynchronous message broker like Apache Kafka and the Apollo Router.
 It has two main responsibilities:
-- Listen for incoming subscriptions to store them in a KV store
-- Listen for messages on a topic, deserialize/process them and publish updates to the router 
 
-🎉 This enables the deployment of real-time capabilities to any platform without the need to write any additonal 
+- Listen for incoming subscriptions to store them in a KV store
+- Listen for messages on a topic, deserialize/process them and publish updates to the router
+
+🎉 This enables the deployment of real-time capabilities to any platform without the need to write any additonal
 code while being fully customizable and deployable as a dedicated micro service for each domain you want to enable subscriptions in.
 
 ### A Naive Implementation
@@ -37,12 +38,14 @@ Normally, implementing those subscriptions in a federated GraphQL environment wo
 ![Naive Architecture](docs/intro-naive-architecture.png)
 
 When analysing this in detail, we can see how requests are being made:
+
 1. A client sends a request to the router with a subscription included + a selection of fields the client wants to fetch.
 2. The Router now slices this overall request into multiple parts after determining which part of the data should be fetched from each Subgraph.
 3. Our example subscription will be sent to and processed by `charging-sessions` while the additional data is fetched from `evses` and `monitoring`.
 4. `charging-sessions` is responsible for initializing the connection/confirmation for the Router as well as for storing the subscription somewhere. It also needs to check for open subscriptions every time it receives an update on a charging session.
 
 This does not scale well in a bigger organization:
+
 - Different teams have different approaches to e.g. storage
 - The same event listeners are built in multiple parts of the platform
 - There will be multiple services taking care of subscriptions with their own logic on how to handle those, even though the principles are the same in all of them
@@ -58,16 +61,16 @@ Depending on the configuration, it internally spins up a variety of handlers to 
 
 # Usage
 
-> [!TIP]  
+> [!TIP]
 > We are right now building a Helm chart to make it possible to deploy natively with e.g. ArgoCD.
 
 ```txt
 Usage: pathfinder [OPTIONS] <COMMAND>
 
 Commands:
-  listen          
-  export-schema   
-  publish-schema  
+  listen
+  export-schema
+  publish-schema
   help            Print this message or the help of the given subcommand(s)
 
 Options:
@@ -76,12 +79,11 @@ Options:
   -V, --version                    Print version
 ```
 
-
 # Configuration
 
 The configuration for the Pathfinder service allows you to set up and customize various components like tracing, health checks, routing, message consumption, and more. Below is a breakdown of the key configuration options.
 
-> [!TIP]  
+> [!TIP]
 > A full example of a configuration file for Pathfinder can be found in `example-config.yaml`.
 
 The configuration can either be done with yaml, via environment variables or also via a mix of both. The environment variable matching a yaml property is always ALL_UPPER, with a double `__` as seperator.
@@ -103,7 +105,7 @@ federation_version: "2.7"
 
 ```yaml
 tracing:
-  log_level: "debug" # allowed: trace | debug | info | warn | error 
+  log_level: "debug" # allowed: trace | debug | info | warn | error
   log_format: "fmt" # supported: json | fmt
 ```
 
@@ -184,7 +186,7 @@ graphos_client:
     graph_ref: "abc"
 ```
 
-- `graphos_client.apollo.advertised_subgraph_url`: The URL under which your Pathfinder instance(s) are reachable for the Router. 
+- `graphos_client.apollo.advertised_subgraph_url`: The URL under which your Pathfinder instance(s) are reachable for the Router.
 
 ### Listeners
 
@@ -283,3 +285,133 @@ sequenceDiagram
 ### Complete/End
 
 ![Complete/End](docs/architecture-pathfinder-main-loop.png)
+
+# Integrations
+
+This document outlines best practices for effectively leveraging Pathfinder in event-driven architectures platforms utilizing Domain-Driven Design (DDD) or traditional platforms that wants to use this powerful tool to enrich user real-time experience. Each section includes a brief description and a sequence diagram to illustrate key concepts.
+
+## Enhancing Real-Time Capabilities on any platform
+
+### Out of the box usage
+
+Pathfinder can enrich platforms by adding real-time capabilities, adapting to different application architectures, whether fully event-driven or traditional.
+
+### Diagram
+
+```mermaid
+sequenceDiagram
+    participant EventDrivenPlatform
+    participant TraditionalPlatform
+
+    participant Pathfinder
+    participant Client
+
+    EventDrivenPlatform->>Pathfinder: Integrate
+    TraditionalPlatform->>Pathfinder: Integrate
+    Pathfinder->>Client: Subscription update
+```
+
+## Integrating with Event-Driven Architecture
+
+### Overview
+
+Utilize Pathfinder within event-driven architectures to enhance scalability and responsiveness. Integrating with Kafka allows for real-time data propagation, enabling services to react promptly to changes.
+
+### Diagram
+
+```mermaid
+sequenceDiagram
+
+    participant Service
+    participant Pathfinder
+    participant Router
+    participant Client
+
+    Client->>Router: Subscribe
+    Router->>Pathfinder: Forward Subscription
+    Service->>Pathfinder: Emit Event
+    Pathfinder->>Router: Trigger webhook
+    Router->>Client: Subscription update
+```
+
+### Event Driven flow diagram
+
+```mermaid
+sequenceDiagram
+    participant Producer
+    participant Consumer
+    participant Pathfinder
+    participant Router
+    participant Client
+
+
+    Producer->>Consumer: Event A
+    Producer->>Pathfinder: Event A
+
+    Pathfinder->>Router: Trigger webhook
+    Router->>Client: Send Subscription Update
+
+```
+
+## Integrating with Domain-Driven Design (DDD)
+
+### Application of DDD Principles
+
+Pathfinder can efficiently manage domain events and notifications, aligning with DDD principles to maintain clarity in your domain model.
+
+### Diagram
+
+```mermaid
+sequenceDiagram
+    participant DomainEvents
+    participant Pathfinder
+    participant Router
+    participant Client
+
+    Client->>Router: Subscribe
+    Router->>Pathfinder: Forward Subscription
+    DomainEvents->>Pathfinder: Domain Notification
+    Pathfinder->>Router: Trigger webhook
+    Router->>Client: Subscription update
+
+```
+
+### DDD flow diagram
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Domain Boundary A
+    participant Domain Boundary B
+    participant Pathfinder
+    participant Router
+    participant Client
+
+    User->>Domain Boundary A: Perform Action (e.g., Create, Update)
+    Domain Boundary A->>Domain Boundary B: Domain Notification
+    Domain Boundary B->>Pathfinder: Domain Notification/Event
+    Domain Boundary A->>Pathfinder: Domain Notification/Event
+
+    Pathfinder->>Router: Trigger webhook
+    Router->>Client: Subscription Update
+```
+
+## Creating Custom Topics for Simplified Integration
+
+### Custom Topic Creation
+
+Encourage creating custom topics to send IDs whenever a change occurs, simplifying integration for platforms that may not fully utilize Kafka or DDD.
+
+### Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant Service
+    participant CustomTopic
+    participant Pathfinder
+
+    Service->>CustomTopic: Emit Event
+    CustomTopic->>Pathfinder: Message containing ID
+    Pathfinder->>Router: Trigger webhook
+    Router->>Client: Subscription update
+```
