@@ -17,7 +17,7 @@ impl InMemoryRouterClient {
 #[async_trait]
 impl RouterClient for InMemoryRouterClient {
     async fn send(&self, request: &Request) -> anyhow::Result<Response> {
-        let request_json = serde_json::to_value(&request)?;
+        let request_json = serde_json::to_value(request)?;
         tracing::debug! {
             event = "request_sent",
             request_json = ?request_json,

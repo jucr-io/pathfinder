@@ -94,7 +94,7 @@ impl Listener {
         let actor_ref = kameo::spawn(actor);
 
         let _router_endpoint =
-            router_endpoint::RouterEndpoint::spawn(&config, actor_ref.clone()).await;
+            router_endpoint::RouterEndpoint::spawn(config, actor_ref.clone()).await;
 
         Ok(actor_ref)
     }

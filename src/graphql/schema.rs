@@ -20,11 +20,12 @@ fn build_from_config(config: &Config) -> anyhow::Result<Schema> {
     let listeners: Listeners = config.get("listeners")?;
     let entities = listeners.iter().map(entity).collect::<Vec<String>>().join("\n\n");
 
-    let mut schema_parts: Vec<String> = Vec::new();
-    schema_parts.push(header_link(config.get("link_version")?));
-    schema_parts.push(header_federation_extension(config.get("federation_version")?));
-    schema_parts.push(entities);
-    schema_parts.push(subscriptions(&listeners));
+    let schema_parts: Vec<String> = vec![
+        header_link(config.get("link_version")?),
+        header_federation_extension(config.get("federation_version")?),
+        entities,
+        subscriptions(&listeners),
+    ];
 
     let schema = schema_parts.join("\n\n\n");
     Ok(Schema(schema))

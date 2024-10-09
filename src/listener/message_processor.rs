@@ -160,7 +160,7 @@ impl Message<message_consumer::RawMessage> for MessageProcessor {
             }
         }
 
-        return Ok(());
+        Ok(())
     }
 }
 

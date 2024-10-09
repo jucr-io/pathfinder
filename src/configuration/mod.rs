@@ -39,16 +39,6 @@ pub struct Listener {
 }
 pub type Listeners = Vec<Listener>;
 
-#[derive(From, Into, Debug)]
-pub struct UniqueListenerMap(HashMap<String, Listener>);
-
-impl Into<UniqueListenerMap> for Vec<Listener> {
-    fn into(self) -> UniqueListenerMap {
-        HashMap::from_iter(self.into_iter().map(|listener| (listener.operation.clone(), listener)))
-            .into()
-    }
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Topic {
     /// The name of the topic.

@@ -100,10 +100,10 @@ struct Configuration {
     graph_variant: String,
 }
 
-impl Into<PublishSchemaResponse> for Option<publish_subgraph_mutation::ResponseData> {
-    fn into(self) -> PublishSchemaResponse {
+impl From<Option<publish_subgraph_mutation::ResponseData>> for PublishSchemaResponse {
+    fn from(response: Option<publish_subgraph_mutation::ResponseData>) -> Self {
         let graph =
-            self.unwrap_or_default().graph.and_then(|g| g.publish_subgraph).unwrap_or_default();
+            response.unwrap_or_default().graph.and_then(|g| g.publish_subgraph).unwrap_or_default();
         let launch = graph.launch.unwrap_or_default();
 
         PublishSchemaResponse {
