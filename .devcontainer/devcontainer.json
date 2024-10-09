@@ -43,22 +43,6 @@
     }
   },
   "customizations": {
-    "codespaces": {
-      "repositories": {
-        "jucr-io/schemas": {
-          "permissions": {
-            "contents": "read",
-            "packages": "read"
-          }
-        },
-        "jucr-io/lightning-rs": {
-          "permissions": {
-            "contents": "read",
-            "packages": "read"
-          }
-        }
-      }
-    },
     "vscode": {
       "extensions": [
         "gruntfuggly.todo-tree",
