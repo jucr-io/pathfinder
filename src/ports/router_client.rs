@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, iter::zip};
 
 use async_trait::async_trait;
 use derive_more::derive::From;
@@ -49,12 +49,11 @@ pub struct Request {
 
 impl Request {
     pub fn subscription(callback_url: &String, id: &String, verifier: &String) -> Self {
-        let mut request = Request::default();
-        request.callback_url = callback_url.to_owned();
-        request.set_string_value("id", id.to_owned());
-        request.set_string_value("verifier", verifier.to_owned());
-        request.set_string_value("kind", "subscription".to_string());
-        request
+        let mut values = serde_json::Map::new();
+        for (key, val) in zip(["id", "verifier", "kind"], [id, verifier, "subscription"]) {
+            values.insert(key.to_owned(), serde_json::json!(val));
+        }
+        Request { callback_url: callback_url.to_owned(), values }
     }
 
     pub fn check(&mut self) -> &mut Self {
@@ -114,9 +113,9 @@ impl Serialize for Request {
     }
 }
 
-impl Into<serde_json::Value> for Request {
-    fn into(self) -> serde_json::Value {
-        serde_json::Map::from(self.values).into()
+impl From<Request> for serde_json::Value {
+    fn from(r: Request) -> Self {
+        r.values.into()
     }
 }
 

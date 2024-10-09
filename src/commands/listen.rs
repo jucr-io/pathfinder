@@ -18,7 +18,7 @@ pub async fn run(config: &Config) -> anyhow::Result<()> {
             Box::new(adapters::kv_store::InMemoryKvStoreFactory::new())
         }
         adapters::kv_store::KvStoreAdapter::Redis => {
-            Box::new(adapters::kv_store::RedisKvStoreFactory::new(&config).await?)
+            Box::new(adapters::kv_store::RedisKvStoreFactory::new(config).await?)
         }
     };
 
@@ -27,7 +27,7 @@ pub async fn run(config: &Config) -> anyhow::Result<()> {
         .unwrap_or_default()
     {
         adapters::message_consumer::MessageConsumerAdapter::Kafka => {
-            Box::new(adapters::message_consumer::KafkaMessageConsumerFactory::new(&config).await?)
+            Box::new(adapters::message_consumer::KafkaMessageConsumerFactory::new(config).await?)
         }
     };
 
@@ -36,7 +36,7 @@ pub async fn run(config: &Config) -> anyhow::Result<()> {
         .unwrap_or_default()
     {
         adapters::router_client::RouterClientAdapter::Http => {
-            Box::new(adapters::router_client::HttpRouterClient::new(&config)?)
+            Box::new(adapters::router_client::HttpRouterClient::new(config)?)
         }
         adapters::router_client::RouterClientAdapter::InMemory => {
             Box::new(adapters::router_client::InMemoryRouterClient::new())
@@ -44,14 +44,14 @@ pub async fn run(config: &Config) -> anyhow::Result<()> {
     };
 
     let listener = listener::Listener::spawn(
-        &config,
+        config,
         router_client,
         kv_store_factory,
         message_consumer_factory,
     )
     .await?;
 
-    let health_endpoint = health::HealthEndpoint::spawn(&config, listener.clone()).await;
+    let health_endpoint = health::HealthEndpoint::spawn(config, listener.clone()).await;
 
     wait_for_terminate_signal().await?;
     listener.stop_gracefully().await?;

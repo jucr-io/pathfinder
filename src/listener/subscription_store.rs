@@ -27,8 +27,8 @@ impl SubscriptionStore {
             .kv_store
             .get_map(key.to_string())
             .await?
-            .into_iter()
-            .map(|(_, value)| serde_json::from_slice(&value).unwrap())
+            .into_values()
+            .map(|value| serde_json::from_slice(&value).unwrap())
             .collect::<Vec<SubscriptionRecord>>();
 
         Ok(map)
@@ -69,16 +69,17 @@ pub struct SubscriptionKey {
     pub operation: String,
     pub operation_id_value: String,
 }
-impl Into<SubscriptionKey> for &SubscriptionRecord {
-    fn into(self) -> SubscriptionKey {
+impl From<&SubscriptionRecord> for SubscriptionKey {
+    fn from(value: &SubscriptionRecord) -> Self {
         SubscriptionKey {
-            operation: self.operation.clone(),
-            operation_id_value: self.operation_id_value.clone(),
+            operation: value.operation.clone(),
+            operation_id_value: value.operation_id_value.clone(),
         }
     }
 }
-impl ToString for SubscriptionKey {
-    fn to_string(&self) -> String {
-        format!("{}:{}", self.operation, self.operation_id_value)
+
+impl std::fmt::Display for SubscriptionKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{}:{}", self.operation, self.operation_id_value))
     }
 }

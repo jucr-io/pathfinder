@@ -69,7 +69,7 @@ impl SubscriptionOperation {
 
                                 match value {
                                     cst::Value::StringValue(s) => {
-                                        let value = s.syntax().text().to_string().replace("\"", "");
+                                        let value = s.syntax().text().to_string().replace('"', "");
                                         arguments.insert(arg_name, value);
                                     }
                                     cst::Value::Variable(v) => {

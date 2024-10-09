@@ -132,7 +132,7 @@ impl Message<IncomingSubscription> for SubscriptionListener {
 
         if self.listener_configuration.publish_initial_update {
             let dispatch = DispatchInitialUpdate { subscription };
-            let _ = ctx.actor_ref().tell(dispatch).send().await?;
+            ctx.actor_ref().tell(dispatch).send().await?;
         }
 
         Ok(())

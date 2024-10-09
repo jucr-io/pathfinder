@@ -23,7 +23,7 @@ impl KvStore for InMemoryKvStore {
         value: Vec<u8>,
         ttl_ms: u64, // Ignored for now
     ) -> anyhow::Result<()> {
-        let map = self.store.entry(key.clone()).or_insert_with(HashMap::new);
+        let map = self.store.entry(key.clone()).or_default();
         map.insert(map_key.clone(), serde_json::to_vec(&value)?);
         tracing::debug! { event = "map_key_inserted", key, map_key, ttl_ms };
         Ok(())
@@ -60,7 +60,6 @@ pub struct InMemoryKvStoreFactory {
 }
 
 impl InMemoryKvStoreFactory {
-    #[allow(dead_code)]
     pub fn new() -> Self {
         Self { _client: InMemoryKvStore::new() }
     }
